@@ -1,0 +1,21 @@
+{
+  "name": "fill-me-in",
+  "version": "1.0.0",
+  "description": "Structured templating for HTML",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "template"
+  ],
+  "author": "Neuman Vong",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {}
+}
