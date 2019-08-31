@@ -40,16 +40,16 @@ function imageSource(target: Element, value: string | Values): boolean {
 }
 
 export const Modifiers: { [key:string]: Modifier } = {
-  default: (target, value) => {
-    if (unpackObject(target, value)) return true;
-    if (imageSource(target, value)) return true;
-    if (textContent(target, value)) return true;
-    return false;
-  },
   textContent: textContent,
   unpackObject: unpackObject,
   imageSource: imageSource
 }
+
+const defaultModifiers: Modifier[] = [
+  unpackObject,
+  imageSource,
+  textContent
+];
 
 /**
  * Creates a document fragment from the given template and values.
@@ -83,7 +83,7 @@ export const Modifiers: { [key:string]: Modifier } = {
  * @param modifier - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export function render(target: Template, values: Values, modifier: Modifier = Modifiers.default): DocumentFragment {
+export function render(target: Template, values: Values, modifiers = defaultModifiers): DocumentFragment {
   if (typeof target === "string") {
     let template = document.querySelector(target);
     if (template instanceof HTMLTemplateElement) {
@@ -102,12 +102,12 @@ export function render(target: Template, values: Values, modifier: Modifier = Mo
     for (let i = 0; i < target.children.length; i++) {
       refs.push([target.children[i], values]);
     }
-    go(refs, modifier);
+    go(refs, modifiers);
     return target;
   }
 }
 
-function go(refs: [Element, Values][], modifier: Modifier): void {
+function go(refs: [Element, Values][], modifiers: Modifier[]): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
 
@@ -155,7 +155,9 @@ function go(refs: [Element, Values][], modifier: Modifier): void {
           refs.push([target.children[i], value]);
         }
       } else {
-        modifier(target, value);
+        for (let modifier of modifiers) {
+          if (modifier(target, value)) break;
+        }
       }
     }
   }

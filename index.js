@@ -23,19 +23,15 @@ function imageSource(target, value) {
     return true;
 }
 export var Modifiers = {
-    default: function (target, value) {
-        if (unpackObject(target, value))
-            return true;
-        if (imageSource(target, value))
-            return true;
-        if (textContent(target, value))
-            return true;
-        return false;
-    },
     textContent: textContent,
     unpackObject: unpackObject,
     imageSource: imageSource
 };
+var defaultModifiers = [
+    unpackObject,
+    imageSource,
+    textContent
+];
 /**
  * Creates a document fragment from the given template and values.
  *
@@ -68,8 +64,8 @@ export var Modifiers = {
  * @param modifier - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export function render(target, values, modifier) {
-    if (modifier === void 0) { modifier = Modifiers.default; }
+export function render(target, values, modifiers) {
+    if (modifiers === void 0) { modifiers = defaultModifiers; }
     if (typeof target === "string") {
         var template = document.querySelector(target);
         if (template instanceof HTMLTemplateElement) {
@@ -90,11 +86,11 @@ export function render(target, values, modifier) {
         for (var i = 0; i < target.children.length; i++) {
             refs.push([target.children[i], values]);
         }
-        go(refs, modifier);
+        go(refs, modifiers);
         return target;
     }
 }
-function go(refs, modifier) {
+function go(refs, modifiers) {
     while (refs.length > 0) {
         var _a = refs.pop(), node = _a[0], values = _a[1];
         var target = void 0;
@@ -143,7 +139,11 @@ function go(refs, modifier) {
                 }
             }
             else {
-                modifier(target, value);
+                for (var _b = 0, modifiers_1 = modifiers; _b < modifiers_1.length; _b++) {
+                    var modifier = modifiers_1[_b];
+                    if (modifier(target, value))
+                        break;
+                }
             }
         }
     }
