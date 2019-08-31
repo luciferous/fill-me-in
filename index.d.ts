@@ -10,6 +10,13 @@ declare type Values = {
     [key: string]: any;
 };
 /**
+ * Modifier describes how values modify target elements.
+ */
+declare type Modifier = (target: Element, value: string | Values) => boolean;
+export declare const Modifiers: {
+    [key: string]: Modifier;
+};
+/**
  * Creates a document fragment from the given template and values.
  *
  * @remarks
@@ -38,7 +45,8 @@ declare type Values = {
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
+ * @param modifier - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export declare function render(target: Template, values: Values): DocumentFragment;
+export declare function render(target: Template, values: Values, modifier?: Modifier): DocumentFragment;
 export {};

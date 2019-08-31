@@ -10,6 +10,48 @@ type Template = string | HTMLTemplateElement | DocumentFragment;
 type Values = { [key: string]: any };
 
 /**
+ * Modifier describes how values modify target elements.
+ */
+type Modifier = (target: Element, value: string | Values) => boolean
+
+function textContent(target: Element, value: string | Values): boolean {
+  target.textContent = value.toString();
+  return true;
+}
+
+function unpackObject(target: Element, value: string | Values): boolean {
+  if (typeof value !== "object") return false;
+
+  for (let attr of Object.keys(value)) {
+    if (attr == "textContent") {
+      target.textContent = value[attr];
+    } else {
+      target.setAttribute(attr, value[attr]);
+    }
+  }
+
+  return true;
+}
+
+function imageSource(target: Element, value: string | Values): boolean {
+  if (target.nodeName !== "IMG") return false;
+  target.setAttribute("src", value.toString());
+  return true;
+}
+
+export const Modifiers: { [key:string]: Modifier } = {
+  default: (target, value) => {
+    if (unpackObject(target, value)) return true;
+    if (imageSource(target, value)) return true;
+    if (textContent(target, value)) return true;
+    return false;
+  },
+  textContent: textContent,
+  unpackObject: unpackObject,
+  imageSource: imageSource
+}
+
+/**
  * Creates a document fragment from the given template and values.
  *
  * @remarks
@@ -38,9 +80,10 @@ type Values = { [key: string]: any };
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
+ * @param modifier - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export function render(target: Template, values: Values): DocumentFragment {
+export function render(target: Template, values: Values, modifier: Modifier = Modifiers.default): DocumentFragment {
   if (typeof target === "string") {
     let template = document.querySelector(target);
     if (template instanceof HTMLTemplateElement) {
@@ -59,12 +102,12 @@ export function render(target: Template, values: Values): DocumentFragment {
     for (let i = 0; i < target.children.length; i++) {
       refs.push([target.children[i], values]);
     }
-    go(refs);
+    go(refs, modifier);
     return target;
   }
 }
 
-function go(refs: [Element, Values][]): void {
+function go(refs: [Element, Values][], modifier: Modifier): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
 
@@ -112,7 +155,7 @@ function go(refs: [Element, Values][]): void {
           refs.push([target.children[i], value]);
         }
       } else {
-        target.textContent = value;
+        modifier(target, value);
       }
     }
   }

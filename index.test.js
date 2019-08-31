@@ -228,3 +228,21 @@ test("nested template", () => {
   normalize(want);
   assert(got.isEqualNode(want), diff(got, want));
 });
+
+test("unpack object", () => {
+  let got = render(
+    mk(`
+<div slot="greeting">Default text.</div>
+    `),
+    {
+      greeting: {
+        class: "greeting",
+        textContent: "hello"
+      }
+    }
+  );
+  let want = mk(`
+<div class="greeting">hello</div>
+  `);
+  assert(got.isEqualNode(want), diff(got, want));
+});
