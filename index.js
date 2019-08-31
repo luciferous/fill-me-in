@@ -1,15 +1,46 @@
-export function render(target, data) {
+/**
+ * Creates a document fragment from the given template and values.
+ *
+ * @remarks
+ *
+ * When passed a selector or a `<template>`, render replaces `<template>` in
+ * the DOM with the rendered document fragment. For example, running
+ *
+ * ```
+ * render("#name" , { vicks: "wedge" });
+ * ```
+ *
+ * on the HTML document
+ *
+ * ```
+ * <div><template id="name"><p slot="vicks"></p></template></div>
+ * ```
+ *
+ * will modify it to
+ *
+ * ```
+ * <div><p>wedge</p></div>
+ * ```
+ *
+ * . However, when passed a document fragment, nothing is automatically modified
+ * (mainly because document fragments don't have parent elements).
+ *
+ * @param target - The template.
+ * @param values - The values to insert into template slots.
+ * @returns Document fragment of the rendered template.
+ */
+export function render(target, values) {
     if (typeof target === "string") {
         var template = document.querySelector(target);
         if (template instanceof HTMLTemplateElement) {
-            return render(template, data);
+            return render(template, values);
         }
         throw new Error("template not found: " + target);
     }
     else if (target instanceof HTMLTemplateElement) {
-        var fragment = render(document.importNode(target.content, true), data);
+        var fragment = render(document.importNode(target.content, true), values);
         if (target.parentElement != null) {
-            target.parentElement.appendChild(fragment);
+            target.parentElement.insertBefore(fragment, target);
             target.remove();
         }
         return fragment;
@@ -17,7 +48,7 @@ export function render(target, data) {
     else {
         var refs = [];
         for (var i = 0; i < target.children.length; i++) {
-            refs.push([target.children[i], data]);
+            refs.push([target.children[i], values]);
         }
         go(refs);
         return target;
@@ -25,7 +56,7 @@ export function render(target, data) {
 }
 function go(refs) {
     while (refs.length > 0) {
-        var _a = refs.pop(), node = _a[0], data = _a[1];
+        var _a = refs.pop(), node = _a[0], values = _a[1];
         var target = void 0;
         if (node.hasAttribute("slot")) {
             target = node;
@@ -38,10 +69,10 @@ function go(refs) {
         var value = void 0;
         var key = target.getAttribute("slot");
         if (key) {
-            value = data[key];
+            value = values[key];
         }
         else {
-            value = data;
+            value = values;
         }
         target.removeAttribute("slot");
         if (Array.isArray(value)) {
@@ -52,7 +83,7 @@ function go(refs) {
                 for (var i = 0; i < clone.children.length; i++) {
                     refs.push([clone.children[i], item]);
                 }
-                template.parentElement.appendChild(clone);
+                template.parentElement.insertBefore(clone, template);
             }
             template.remove();
             if (target.hasAttribute("onempty") && value.length == 0) {

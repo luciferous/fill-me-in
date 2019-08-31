@@ -1,7 +1,44 @@
-declare type Data = {
-    [_: string]: any;
+/**
+ * Template is a reference to a template. It can be a selector string,
+ * `<template>`, or a document fragment.
+ */
+declare type Template = string | HTMLTemplateElement | DocumentFragment;
+/**
+ * Values is the type of a plain old JavaScript object.
+ */
+declare type Values = {
+    [key: string]: any;
 };
-export declare function render(template: string, data: Data): DocumentFragment;
-export declare function render(template: HTMLTemplateElement, data: Data): DocumentFragment;
-export declare function render(fragment: DocumentFragment, data: Data): DocumentFragment;
+/**
+ * Creates a document fragment from the given template and values.
+ *
+ * @remarks
+ *
+ * When passed a selector or a `<template>`, render replaces `<template>` in
+ * the DOM with the rendered document fragment. For example, running
+ *
+ * ```
+ * render("#name" , { vicks: "wedge" });
+ * ```
+ *
+ * on the HTML document
+ *
+ * ```
+ * <div><template id="name"><p slot="vicks"></p></template></div>
+ * ```
+ *
+ * will modify it to
+ *
+ * ```
+ * <div><p>wedge</p></div>
+ * ```
+ *
+ * . However, when passed a document fragment, nothing is automatically modified
+ * (mainly because document fragments don't have parent elements).
+ *
+ * @param target - The template.
+ * @param values - The values to insert into template slots.
+ * @returns Document fragment of the rendered template.
+ */
+export declare function render(target: Template, values: Values): DocumentFragment;
 export {};
