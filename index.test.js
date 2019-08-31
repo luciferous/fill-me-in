@@ -17,45 +17,39 @@ function diff(a, b) {
 }
 
 function normalize(node) {
-  var texts = [];
-
-  for (var i = 0; i < node.childNodes.length; i++) {
-    let child = node.childNodes[i];
-    if (child.nodeType == 3) {
-      console.log(`"${child.textContent}"`);
-      if (child.textContent.trim() == "") {
-        texts.push(child);
-      }
-    } else if (child.childNodes) {
-      normalize(child);
+  let nodes = [node];
+  while (nodes.length > 0) {
+    let target = nodes.pop();
+    if (target.nodeType == 3 && target.textContent.trim() == "") {
+      target.remove();
+    }
+    for (let i = 0; i < target.childNodes.length; i++) {
+      nodes.push(target.childNodes[i]);
     }
   };
-
-  texts.forEach(function(child) { child.remove() });
-  return node;
 }
 
-test("greeting", () => {
+test("object", () => {
   let got = render(
     mk(`
-<div data-key="greeting"></div>
+<div slot="greeting"></div>
     `),
     {
       greeting: "hello"
     }
   );
   let want = mk(`
-<div data-key="greeting">hello</div>
+<div>hello</div>
   `);
   assert(got.isEqualNode(want), diff(got, want));
 });
 
-test("multilingual greeting", () => {
+test("nested object", () => {
   let got = render(
     mk(`
-<div data-key="greeting">
-  <div data-key="en"></div>
-  <div data-key="ja"></div>
+<div slot="greeting">
+  <div slot="en"></div>
+  <div slot="ja"></div>
 </div>
     `),
     {
@@ -66,9 +60,9 @@ test("multilingual greeting", () => {
     }
   );
   let want = mk(`
-<div data-key="greeting">
-  <div data-key="en">hello</div>
-  <div data-key="ja">konnichiwa</div>
+<div>
+  <div>hello</div>
+  <div>konnichiwa</div>
 </div>
   `);
   assert(got.isEqualNode(want), diff(got, want));
@@ -77,8 +71,8 @@ test("multilingual greeting", () => {
 test("arrays", () => {
   let got = render(
     mk(`
-<ul data-key="fruit">
-  <template><li data-value></li></template>
+<ul slot="fruit">
+  <template><li slot></li></template>
 </ul>
     `),
     {
@@ -89,13 +83,83 @@ test("arrays", () => {
     }
   );
   let want = mk(`
-<ul data-key="fruit">
-  <li data-value>apple</li>
-  <li data-value>orange</li>
+<ul>
+  <li>apple</li>
+  <li>orange</li>
 </ul>
   `);
-  normalize(got.firstChild);
-  normalize(want.firstChild);
+  normalize(got);
+  normalize(want);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("nested arrays", () => {
+  let got = render(
+    mk(`
+<ul slot="recipes">
+  <template>
+  <li slot>
+    <div>Ingredients:
+      <ul>
+        <template><li slot></li></template>
+      </ul>
+    </div>
+  </li>
+  </template>
+</ul>
+    `),
+    {
+      recipes: [
+        ["apple", "lime", "kale"],
+        ["orange", "carrot"]
+      ]
+    }
+  );
+  let want = mk(`
+<ul>
+  <li>
+    <div>Ingredients:
+      <ul>
+        <li>apple</li>
+        <li>lime</li>
+        <li>kale</li>
+      </ul>
+    </div>
+  </li>
+  <li>
+    <div>Ingredients:
+      <ul>
+        <li>orange</li>
+        <li>carrot</li>
+      </ul>
+    </div>
+  </li>
+</ul>
+  `);
+  normalize(got);
+  normalize(want);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("onempty", () => {
+  let got = render(
+    mk(`
+<div>
+  <ul slot="fruit" onempty="this.remove()">
+    <template><li slot></li></template>
+  </ul>
+</div>
+    `),
+    {
+      fruit: []
+    }
+  );
+  let want = mk(`
+<div>
+</div>
+  `);
+  normalize(got);
+  normalize(want);
   assert(got.isEqualNode(want), diff(got, want));
 });
 
@@ -103,17 +167,13 @@ test("nested template", () => {
   let got = render(
     mk(`
 <div>
-  <p data-key="name">Name:
-    <span data-key="first"></span>
-    <span data-key="last"></span>
-  </p>
-  <div data-key="aliases">
+  <div slot="aliases">
     <p>Aliases:</p>
     <ul>
       <template data-omit-empty>
-        <li data-key="name">
-          <span data-key="first"></span>
-          <span data-key="last"></span>
+        <li slot="name">
+          <span slot="first"></span>
+          <span slot="last"></span>
         </li>
       </template>
     </ul>
@@ -124,22 +184,23 @@ test("nested template", () => {
       salutation: "Mr.",
       name: { first: "Robert", last: "Dobalina" },
       aliases: [
+        { name: { first: "Bob", last: "Dobalina" } },
         { name: { first: "Bob", last: "Dobalina" } }
       ]
     }
   );
   let want = mk(`
 <div>
-  <p data-key="name">Name:
-    <span data-key="first">Robert</span>
-    <span data-key="last">Dobalina</span>
-  </p>
-  <div data-key="aliases">
+  <div>
     <p>Aliases:</p>
     <ul>
-      <li data-key="name">
-        <span data-key="first">Bob</span>
-        <span data-key="last">Dobalina</span>
+      <li>
+        <span>Bob</span>
+        <span>Dobalina</span>
+      </li>
+      <li>
+        <span>Bob</span>
+        <span>Dobalina</span>
       </li>
     </ul>
   </div>

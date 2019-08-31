@@ -1,5 +1,7 @@
-export declare function templater(template: string, data: object, removeTemplate?: boolean): Element;
-export declare function templater(template: HTMLTemplateElement, data: object, removeTemplate?: boolean): Element;
-export declare function render(node: Element, data: {
+declare type Data = {
     [_: string]: any;
-}): Element;
+};
+export declare function render(template: string, data: Data): DocumentFragment;
+export declare function render(template: HTMLTemplateElement, data: Data): DocumentFragment;
+export declare function render(fragment: DocumentFragment, data: Data): DocumentFragment;
+export {};

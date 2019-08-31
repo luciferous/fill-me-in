@@ -1,78 +1,80 @@
-export function templater(template: string, data: object, removeTemplate?: boolean): Element
-export function templater(template: HTMLTemplateElement, data: object, removeTemplate?: boolean): Element
-export function templater(
-  template: any,
-  data: object,
-  removeTemplate = true
-): Element {
-  if (typeof template == "string") {
-    let templateElement = document.querySelector(template);
-    if (templateElement instanceof HTMLTemplateElement) {
-      return templater(templateElement, data, removeTemplate);
-    }
-    throw new Error(`template not found: ${template}`);
-  }
+type Data = { [_: string]:any; };
 
-  const clone: Element = document.importNode(template.content, true);
-  const node: Element = render(clone, data);
-  if (template.parentElement != null) {
-    template.parentElement.appendChild(node, template);
-    if (removeTemplate) {
-      template.remove();
+export function render(template: string, data: Data): DocumentFragment
+export function render(template: HTMLTemplateElement, data: Data): DocumentFragment
+export function render(fragment: DocumentFragment, data: Data): DocumentFragment
+export function render(
+  target: any,
+  data: Data
+): DocumentFragment {
+  if (typeof target === "string") {
+    let template = document.querySelector(target);
+    if (template instanceof HTMLTemplateElement) {
+      return render(template, data);
     }
+    throw new Error(`template not found: ${target}`);
+  } else if (target instanceof HTMLTemplateElement) {
+    let fragment = render(document.importNode(target.content, true), data);
+    if (target.parentElement != null) {
+      target.parentElement.appendChild(fragment);
+      target.remove();
+    }
+    return fragment;
+  } else {
+    let refs: [Element, Data][] = [];
+    for (let i = 0; i < target.children.length; i++) {
+      refs.push([target.children[i], data]);
+    }
+    go(refs);
+    return target;
   }
-  return node;
 }
 
-export function render(
-  node: Element,
-  data: { [_: string]: any; }
-): Element {
-  for (var i = 0; i < node.children.length; i++) {
-    const child = node.children[i];
+function go(refs: [Element, Data][]): void {
+  while (refs.length > 0) {
+    let [node, data] = refs.pop()!;
+
+    let target: Element | null;
+    if (node.hasAttribute("slot")) {
+      target = node;
+    } else {
+      target = node.querySelector("[slot]");
+    }
+
+    if (!target) continue;
 
     let value: any;
-    if (child.hasAttribute("data-value")) {
-      value = data;
+    let key = target.getAttribute("slot");
+    if (key) {
+      value = data[key];
     } else {
-      let key = child.getAttribute("data-key");
-      if (key) {
-        value = data[key];
-      } else if (child.children.length > 0) {
-        return render(child, data);
-      }
+      value = data;
     }
-
-    if (!value) {
-      continue;
-    }
+    target.removeAttribute("slot");
 
     if (Array.isArray(value)) {
-      if (value.length == 0 && child.hasAttribute("data-omit-empty")) {
-        child.remove();
-      } else {
-        let element = child.querySelector("template");
-        if (!(element instanceof HTMLTemplateElement)) {
-          throw new Error(`found list without template: ${child}`);
+      let template = target.querySelector("template")!;
+      for (let item of value) {
+        let clone = document.importNode(template.content, true);
+        for (let i = 0; i < clone.children.length; i++) {
+          refs.push([clone.children[i], item]);
         }
-
-        let template = element as HTMLTemplateElement;
-
-        for (var j = 0; j < value.length; j++) {
-          let clone = document.importNode(template.content, true) as unknown;
-          let fragment = render(clone as Element, value[j]);
-          if (template.parentElement != null) {
-            template.parentElement.appendChild(fragment);
-          }
-        }
-
-        template.remove();
+        template.parentElement!.appendChild(clone);
       }
-    } else if (typeof value == "object") {
-      render(child, value);
+      template.remove();
+
+      if (target.hasAttribute("onempty") && value.length == 0) {
+        let handler = new Function(target.getAttribute("onempty")!);
+        handler.call(target);
+      }
     } else {
-      child.textContent = value;
+      if (target.children.length > 0) {
+        for (let i = 0; i < target.children.length; i++) {
+          refs.push([target.children[i], value]);
+        }
+      } else {
+        target.textContent = value;
+      }
     }
   }
-  return node;
 }

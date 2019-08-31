@@ -1,67 +1,74 @@
-export function templater(template, data, removeTemplate) {
-    if (removeTemplate === void 0) { removeTemplate = true; }
-    if (typeof template == "string") {
-        var templateElement = document.querySelector(template);
-        if (templateElement instanceof HTMLTemplateElement) {
-            return templater(templateElement, data, removeTemplate);
+export function render(target, data) {
+    if (typeof target === "string") {
+        var template = document.querySelector(target);
+        if (template instanceof HTMLTemplateElement) {
+            return render(template, data);
         }
-        throw new Error("template not found: " + template);
+        throw new Error("template not found: " + target);
     }
-    var clone = document.importNode(template.content, true);
-    var node = render(clone, data);
-    if (template.parentElement != null) {
-        template.parentElement.appendChild(node, template);
-        if (removeTemplate) {
-            template.remove();
+    else if (target instanceof HTMLTemplateElement) {
+        var fragment = render(document.importNode(target.content, true), data);
+        if (target.parentElement != null) {
+            target.parentElement.appendChild(fragment);
+            target.remove();
         }
+        return fragment;
     }
-    return node;
+    else {
+        var refs = [];
+        for (var i = 0; i < target.children.length; i++) {
+            refs.push([target.children[i], data]);
+        }
+        go(refs);
+        return target;
+    }
 }
-export function render(node, data) {
-    for (var i = 0; i < node.children.length; i++) {
-        var child = node.children[i];
+function go(refs) {
+    while (refs.length > 0) {
+        var _a = refs.pop(), node = _a[0], data = _a[1];
+        var target = void 0;
+        if (node.hasAttribute("slot")) {
+            target = node;
+        }
+        else {
+            target = node.querySelector("[slot]");
+        }
+        if (!target)
+            continue;
         var value = void 0;
-        if (child.hasAttribute("data-value")) {
+        var key = target.getAttribute("slot");
+        if (key) {
+            value = data[key];
+        }
+        else {
             value = data;
         }
-        else {
-            var key = child.getAttribute("data-key");
-            if (key) {
-                value = data[key];
-            }
-            else if (child.children.length > 0) {
-                return render(child, data);
-            }
-        }
-        if (!value) {
-            continue;
-        }
+        target.removeAttribute("slot");
         if (Array.isArray(value)) {
-            if (value.length == 0 && child.hasAttribute("data-omit-empty")) {
-                child.remove();
+            var template = target.querySelector("template");
+            for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {
+                var item = value_1[_i];
+                var clone = document.importNode(template.content, true);
+                for (var i = 0; i < clone.children.length; i++) {
+                    refs.push([clone.children[i], item]);
+                }
+                template.parentElement.appendChild(clone);
+            }
+            template.remove();
+            if (target.hasAttribute("onempty") && value.length == 0) {
+                var handler = new Function(target.getAttribute("onempty"));
+                handler.call(target);
+            }
+        }
+        else {
+            if (target.children.length > 0) {
+                for (var i = 0; i < target.children.length; i++) {
+                    refs.push([target.children[i], value]);
+                }
             }
             else {
-                var element = child.querySelector("template");
-                if (!(element instanceof HTMLTemplateElement)) {
-                    throw new Error("found list without template: " + child);
-                }
-                var template = element;
-                for (var j = 0; j < value.length; j++) {
-                    var clone = document.importNode(template.content, true);
-                    var fragment = render(clone, value[j]);
-                    if (template.parentElement != null) {
-                        template.parentElement.appendChild(fragment);
-                    }
-                }
-                template.remove();
+                target.textContent = value;
             }
         }
-        else if (typeof value == "object") {
-            render(child, value);
-        }
-        else {
-            child.textContent = value;
-        }
     }
-    return node;
 }
