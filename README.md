@@ -24,10 +24,11 @@ and produces
 ```
 <p><span>Hello</span>, <span>world</span>!</p>
 ```
+.
 
 ## What is syntax-less?
 
-HTML doesn't need a templating syntax (e.g. `{{example}}``) because its
+HTML doesn't need a templating syntax (e.g. `{{example}}`) because its
 structure forms an explicit hierarchy, which can be used as an index into
 arbitrary objects.
 
