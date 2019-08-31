@@ -78,6 +78,8 @@ function go(refs) {
             value = values;
         }
         target.removeAttribute("slot");
+        if (!value)
+            continue;
         if (Array.isArray(value)) {
             var template = target.querySelector("template");
             for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {

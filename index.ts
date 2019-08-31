@@ -89,6 +89,8 @@ function go(refs: [Element, Values][]): void {
     }
     target.removeAttribute("slot");
 
+    if (!value) continue;
+
     if (Array.isArray(value)) {
       let template = target.querySelector("template")!;
       for (let item of value) {

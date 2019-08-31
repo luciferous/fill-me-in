@@ -167,6 +167,20 @@ test("onempty", () => {
   assert(got.isEqualNode(want), diff(got, want));
 });
 
+test("defaults", () => {
+  let got = render(
+    mk(`
+<div slot="greeting">Default text.</div>
+    `),
+    {
+    }
+  );
+  let want = mk(`
+<div>Default text.</div>
+  `);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
 test("nested template", () => {
   let got = render(
     mk(`
