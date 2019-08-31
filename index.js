@@ -63,6 +63,9 @@ function go(refs) {
         }
         else {
             target = node.querySelector("[slot]");
+            if (target) {
+                refs.push([node, values]);
+            }
         }
         if (!target)
             continue;

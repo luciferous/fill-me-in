@@ -48,8 +48,10 @@ test("nested object", () => {
   let got = render(
     mk(`
 <div slot="greeting">
-  <div slot="en"></div>
-  <div slot="ja"></div>
+  <div>
+    <div slot="en"></div>
+    <div slot="ja"></div>
+  </div>
 </div>
     `),
     {
@@ -61,8 +63,10 @@ test("nested object", () => {
   );
   let want = mk(`
 <div>
-  <div>hello</div>
-  <div>konnichiwa</div>
+  <div>
+    <div>hello</div>
+    <div>konnichiwa</div>
+  </div>
 </div>
   `);
   assert(got.isEqualNode(want), diff(got, want));

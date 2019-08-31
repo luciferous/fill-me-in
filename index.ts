@@ -73,6 +73,9 @@ function go(refs: [Element, Values][]): void {
       target = node;
     } else {
       target = node.querySelector("[slot]");
+      if (target) {
+        refs.push([node, values]);
+      }
     }
 
     if (!target) continue;
