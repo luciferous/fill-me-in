@@ -116,5 +116,5 @@ For example, this is a nonsense modifier to set every target element to
 "hello".
 
 ```
-render("#template", values, [function(element, value) { element.textContent = "foo" }]);
+render("#template", values, [function(element, value) { element.textContent = "hello" }]);
 ```
