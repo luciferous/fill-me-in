@@ -1,12 +1,13 @@
-function textContent(target, value) {
+function textContent() {
+    var _a = this, target = _a.target, value = _a.value;
     target.textContent = value.toString();
-    return true;
 }
-function unpackObject(target, value) {
+function unpackObject() {
+    var _a = this, target = _a.target, value = _a.value;
     if (typeof value !== "object")
         return false;
-    for (var _i = 0, _a = Object.keys(value); _i < _a.length; _i++) {
-        var attr = _a[_i];
+    for (var _i = 0, _b = Object.keys(value); _i < _b.length; _i++) {
+        var attr = _b[_i];
         if (attr == "textContent") {
             target.textContent = value[attr];
         }
@@ -14,13 +15,12 @@ function unpackObject(target, value) {
             target.setAttribute(attr, value[attr]);
         }
     }
-    return true;
 }
-function imageSource(target, value) {
+function imageSource() {
+    var _a = this, target = _a.target, value = _a.value;
     if (target.nodeName !== "IMG")
         return false;
     target.setAttribute("src", value.toString());
-    return true;
 }
 export var Modifiers = {
     textContent: textContent,
@@ -129,6 +129,7 @@ function go(refs, modifiers) {
             template.remove();
             if (target.hasAttribute("onempty") && value.length == 0) {
                 var handler = new Function(target.getAttribute("onempty"));
+                target.removeAttribute("onempty");
                 handler.call(target);
             }
         }
@@ -139,9 +140,18 @@ function go(refs, modifiers) {
                 }
             }
             else {
-                for (var _b = 0, modifiers_1 = modifiers; _b < modifiers_1.length; _b++) {
-                    var modifier = modifiers_1[_b];
-                    if (modifier(target, value))
+                var appliedModifiers = void 0;
+                if (target.hasAttribute("onmodify")) {
+                    var modifier = (new Function(target.getAttribute("onmodify")));
+                    target.removeAttribute("onmodify");
+                    appliedModifiers = [modifier].concat(modifiers);
+                }
+                else {
+                    appliedModifiers = modifiers;
+                }
+                for (var _b = 0, appliedModifiers_1 = appliedModifiers; _b < appliedModifiers_1.length; _b++) {
+                    var modifier = appliedModifiers_1[_b];
+                    if (modifier.call({ target: target, value: value }) !== false)
                         break;
                 }
             }

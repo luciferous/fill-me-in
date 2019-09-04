@@ -125,5 +125,5 @@ nonsense modifier to set every target element to "hello", ignoring the passed
 in value.
 
 ```javascript
-render("#template", values, [function(element, value) { element.textContent = "hello" }]);
+render("#template", values, [function() { this.target.textContent = "hello" }]);
 ```

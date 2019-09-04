@@ -11,8 +11,13 @@ declare type Values = {
 };
 /**
  * Modifier describes how values modify target elements.
+ *
+ * @param this an object with `element` and `value`
  */
-declare type Modifier = (target: Element, value: string | Values) => boolean;
+declare type Modifier = (this: {
+    target: Element;
+    value: string | Values;
+}) => boolean | void;
 export declare const Modifiers: {
     [key: string]: Modifier;
 };

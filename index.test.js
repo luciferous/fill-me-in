@@ -57,7 +57,7 @@ test("nested object", () => {
     {
       greeting: {
         en: "hello",
-        ja: "konnichiwa"
+        ja: "こんにちは"
       }
     }
   );
@@ -65,7 +65,7 @@ test("nested object", () => {
 <div>
   <div>
     <div>hello</div>
-    <div>konnichiwa</div>
+    <div>こんにちは</div>
   </div>
 </div>
   `);
@@ -243,6 +243,24 @@ test("unpack object", () => {
   );
   let want = mk(`
 <div class="greeting">hello</div>
+  `);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("onmodify", () => {
+  let got = render(
+    mk(`
+<div slot="greeting" onmodify="this.target.textContent = this.value['ja']">Default text.</div>
+    `),
+    {
+      greeting: {
+        en: "hello",
+        ja: "こんにちは"
+      }
+    }
+  );
+  let want = mk(`
+<div>こんにちは</div>
   `);
   assert(got.isEqualNode(want), diff(got, want));
 });
