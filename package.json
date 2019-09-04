@@ -1,6 +1,6 @@
 {
   "name": "fill-me-in",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Structured templating for HTML",
   "main": "index.js",
   "type": "module",
