@@ -11,15 +11,18 @@ type Values = { [key: string]: any };
 
 /**
  * Modifier describes how values modify target elements.
+ *
+ * @param this an object with `element` and `value`
  */
-type Modifier = (target: Element, value: string | Values) => boolean
+type Modifier = (this: { target: Element, value: string | Values }) => boolean | void
 
-function textContent(target: Element, value: string | Values): boolean {
+function textContent(this: { target: Element, value: string | Values }): boolean | void {
+  let { target, value } = this;
   target.textContent = value.toString();
-  return true;
 }
 
-function unpackObject(target: Element, value: string | Values): boolean {
+function unpackObject(this: { target: Element, value: string | Values }): boolean | void {
+  let { target, value } = this;
   if (typeof value !== "object") return false;
 
   for (let attr of Object.keys(value)) {
@@ -29,14 +32,12 @@ function unpackObject(target: Element, value: string | Values): boolean {
       target.setAttribute(attr, value[attr]);
     }
   }
-
-  return true;
 }
 
-function imageSource(target: Element, value: string | Values): boolean {
+function imageSource(this: { target: Element, value: string | Values }): boolean | void {
+  let { target, value } = this;
   if (target.nodeName !== "IMG") return false;
   target.setAttribute("src", value.toString());
-  return true;
 }
 
 export const Modifiers: { [key:string]: Modifier } = {
@@ -147,6 +148,7 @@ function go(refs: [Element, Values][], modifiers: Modifier[]): void {
 
       if (target.hasAttribute("onempty") && value.length == 0) {
         let handler = new Function(target.getAttribute("onempty")!);
+        target.removeAttribute("onempty");
         handler.call(target);
       }
     } else {
@@ -155,8 +157,16 @@ function go(refs: [Element, Values][], modifiers: Modifier[]): void {
           refs.push([target.children[i], value]);
         }
       } else {
-        for (let modifier of modifiers) {
-          if (modifier(target, value)) break;
+        let appliedModifiers: Modifier[];
+        if (target.hasAttribute("onmodify")) {
+          let modifier = <Modifier>(new Function(target.getAttribute("onmodify")!));
+          target.removeAttribute("onmodify");
+          appliedModifiers = [modifier].concat(modifiers);
+        } else {
+          appliedModifiers = modifiers;
+        }
+        for (let modifier of appliedModifiers) {
+          if (modifier.call({ target: target, value: value }) !== false) break;
         }
       }
     }
