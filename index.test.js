@@ -184,45 +184,40 @@ test("defaults", () => {
 test("nested template", () => {
   let got = render(
     mk(`
-<div>
-  <div slot="aliases">
-    <p>Aliases:</p>
-    <ul>
-      <template data-omit-empty>
-        <li slot="name">
-          <span slot="first"></span>
-          <span slot="last"></span>
-        </li>
-      </template>
-    </ul>
-  </div>
-</div>
+<table slot="albums">
+  <tbody>
+    <template>
+      <tr>
+        <td slot="name"></td>
+        <td slot="year"></td>
+        <td slot="artist"></td>
+      </tr>
+    </template>
+  </tbody>
+</table>
     `),
-    {
-      salutation: "Mr.",
-      name: { first: "Robert", last: "Dobalina" },
-      aliases: [
-        { name: { first: "Bob", last: "Dobalina" } },
-        { name: { first: "Bob", last: "Dobalina" } }
-      ]
-    }
+     {
+       albums: [
+         { name: "Dr. Feelgood", year: 1989, artist: "Mötley Crüe" },
+         { name: "Appetite For Destruction", year: 1987, artist: "Guns N' Roses" }
+       ]
+     }
   );
   let want = mk(`
-<div>
-  <div>
-    <p>Aliases:</p>
-    <ul>
-      <li>
-        <span>Bob</span>
-        <span>Dobalina</span>
-      </li>
-      <li>
-        <span>Bob</span>
-        <span>Dobalina</span>
-      </li>
-    </ul>
-  </div>
-</div>
+<table>
+  <tbody>
+    <tr>
+      <td>Dr. Feelgood</td>
+      <td>1989</td>
+      <td>Mötley Crüe</td>
+    </tr>
+    <tr>
+      <td>Appetite For Destruction</td>
+      <td>1987</td>
+      <td>Guns N' Roses</td>
+    </tr>
+  </tbody>
+</table>
   `);
   normalize(got);
   normalize(want);
