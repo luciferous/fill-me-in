@@ -1,6 +1,6 @@
 *Syntax-less* templating for HTML.
 
-## An example
+## The basics
 Running
 
 ```javascript
@@ -27,7 +27,139 @@ produces
     <p><span>Hello</span>, <span>world</span>!</p>
 ```
 
-## The basic idea
+### Lists
+
+A list of albums
+
+```javascript
+{
+  albums: [
+    { name: "Dr. Feelgood", year: 1989, artist: "Mötley Crüe" },
+    { name: "Appetite For Destruction", year: 1987, artist: "Guns N' Roses" }
+  ]
+}
+```
+
+applied to this template
+
+```html
+<template>
+  <table slot="albums">
+    <tbody>
+      <template>
+        <tr>
+          <td slot="name"></td>
+          <td slot="year"></td>
+          <td slot="artist"></td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</template>
+```
+
+produces
+
+```html
+<table>
+  <tbody>
+    <tr>
+      <td>Dr. Feelgood</td>
+      <td>1989</td>
+      <td>Mötley Crüe</td>
+    </tr>
+    <tr>
+      <td>Appetite For Destruction</td>
+      <td>1987</td>
+      <td>Guns N' Roses</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+### Empty lists
+
+The attribute `onempty` is a Javascript callback that is run when the indexed
+list is empty (i.e. `{ albums: [] }`).
+
+```html
+<div class="or-empty" style="display: none">No albums found.</div>
+
+<template>
+  <table slot="albums" class="or-empty" onempty="$('.or-empty').toggle()">
+    <tbody>
+      <template>
+        <tr>
+          <td slot="name"></td>
+          <td slot="year"></td>
+          <td slot="artist"></td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</template>
+```
+
+becomes
+
+```html
+<div class="or-empty">No albums found.</div>
+
+<table class="or-empty" style="display: none">
+  <tbody>
+  </tbody>
+</table>
+```
+
+### Images
+
+`<img>` is special-cased. The indexed value sets the `src` attribute.
+
+```javascript
+{
+  pic: "https://example.com/example.jpg"
+}
+```
+
+applied to
+
+```html
+<img src="default.jpg" slot="pic">
+```
+
+produces
+
+```html
+<img src="https://example.com/example.jpg">
+```
+
+### Links
+
+When the indexed value is an object, its properties are unpacked into
+attributes of the target element.
+
+```javascript
+{
+  link: {
+    href: "http://example.com/",
+    textContent: "Example"
+  }
+}
+```
+
+applied to
+
+```html
+<a slot="link"></a>
+```
+
+produces
+
+```html
+<a href="http://example.com/">Example</a>
+```
+
+## Why and how
 
 HTML doesn't need a templating syntax (e.g. `{{example}}`). Its structure is an
 explicit hierarchy, which can be used to traverse arbitrary objects.
@@ -60,56 +192,8 @@ In the above example, the `slot` attributes specify the path
 For simple templates, we are done here. The indexed value fills in the
 designated region, and so `<p slot="zip"></p>` becomes `<p>12345</p>`.
 
-But *filling in* the region isn't always how we want to transform it. To
-understand why, let's look at `<img>` and `<a>`.
-
-### \<img\>
-
-```html
-<img src="default.jpg" slot="pic">
-```
-
-applied to
-
-```javascript
-{
-  pic: "https://example.com/example.jpg"
-}
-```
-
-produces
-
-```html
-<img src="https://example.com/example.jpg">
-```
-
-`<img>` is special-cased. The indexed value sets the `src` attribute.
-
-### \<a\>
-
-```html
-<a slot="link"></a>
-```
-
-applied to
-
-```javascript
-{
-  link: {
-    href: "http://example.com/",
-    textContent: "Example"
-  }
-}
-```
-
-becomes
-
-```html
-<a href="http://example.com/">Example</a>
-```
-
-When the indexed value is an object, its properties are unpacked into
-attributes of the target element.
+But *filling in* the region isn't always how we want to transform it (see:
+[Images](#images) and [Links](#links)).
 
 ## Modifiers
 
