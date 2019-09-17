@@ -64,18 +64,18 @@ var defaultModifiers = [
  * @param modifier - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export function render(target, values, modifiers) {
-    if (modifiers === void 0) { modifiers = defaultModifiers; }
+export function render(target, values, _a) {
+    var _b = _a === void 0 ? {} : _a, _c = _b.replace, replace = _c === void 0 ? false : _c, _d = _b.modifiers, modifiers = _d === void 0 ? defaultModifiers : _d;
     if (typeof target === "string") {
         var template = document.querySelector(target);
         if (template instanceof HTMLTemplateElement) {
-            return render(template, values);
+            return render(template, values, { replace: replace, modifiers: modifiers });
         }
         throw new Error("template not found: " + target);
     }
     else if (target instanceof HTMLTemplateElement) {
-        var fragment = render(document.importNode(target.content, true), values);
-        if (target.parentElement != null) {
+        var fragment = render(document.importNode(target.content, true), values, { replace: replace, modifiers: modifiers });
+        if (target.parentElement && replace) {
             target.parentElement.insertBefore(fragment, target);
             target.remove();
         }
