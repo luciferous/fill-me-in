@@ -27,6 +27,11 @@ designated region, and so `<p slot="zip"></p>` becomes `<p>12345</p>`.
 But *filling in* the region isn't always how we want to transform it (see:
 [Images](#images) and [Links](#links)).
 
+## Have a look
+
+- [Demos](https://lcfrs.org/fill-me-in/demos.html)
+- [Tests](https://lcfrs.org/fill-me-in/tests.html)
+
 ## The basics
 
 Start with an `import`.
@@ -205,5 +210,7 @@ nonsense modifier to set every target element to "hello", ignoring the passed
 in value.
 
 ```javascript
-render("#template", values, [function() { this.target.textContent = "hello" }]);
+render("#template", values, {
+  modifiers: [function() { this.target.textContent = "hello" }]
+});
 ```
