@@ -259,3 +259,21 @@ test("onmodify", () => {
   `);
   assert(got.isEqualNode(want), diff(got, want));
 });
+
+test("replace=false", () => {
+  let got = document.createElement("div");
+  got.innerHTML = `<template><div slot="greeting"></div></template>`;
+  render(got.querySelector("template"), { greeting: "hello" }, { replace: false });
+  let want = document.createElement("div");
+  want.innerHTML = `<template><div slot="greeting"></div></template>`;
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("replace=true", () => {
+  let got = document.createElement("div");
+  got.innerHTML = `<template><div slot="greeting"></div></template>`;
+  render(got.querySelector("template"), { greeting: "hello" }, { replace: true });
+  let want = document.createElement("div");
+  want.innerHTML = `<div>hello</div>`;
+  assert(got.isEqualNode(want), diff(got, want));
+});

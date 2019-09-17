@@ -84,16 +84,20 @@ const defaultModifiers: Modifier[] = [
  * @param modifier - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export function render(target: Template, values: Values, modifiers = defaultModifiers): DocumentFragment {
+export function render(
+  target: Template,
+  values: Values,
+  { replace = false, modifiers = defaultModifiers } = {}
+): DocumentFragment {
   if (typeof target === "string") {
     let template = document.querySelector(target);
     if (template instanceof HTMLTemplateElement) {
-      return render(template, values);
+      return render(template, values, { replace: replace, modifiers: modifiers });
     }
     throw new Error(`template not found: ${target}`);
   } else if (target instanceof HTMLTemplateElement) {
-    let fragment = render(document.importNode(target.content, true), values);
-    if (target.parentElement != null) {
+    let fragment = render(document.importNode(target.content, true), values, { replace: replace, modifiers: modifiers });
+    if (target.parentElement && replace) {
       target.parentElement.insertBefore(fragment, target);
       target.remove();
     }

@@ -53,5 +53,8 @@ export declare const Modifiers: {
  * @param modifier - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export declare function render(target: Template, values: Values, modifiers?: Modifier[]): DocumentFragment;
+export declare function render(target: Template, values: Values, { replace, modifiers }?: {
+    replace?: boolean | undefined;
+    modifiers?: Modifier[] | undefined;
+}): DocumentFragment;
 export {};
