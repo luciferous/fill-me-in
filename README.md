@@ -1,6 +1,6 @@
 *Syntax-less* templating for HTML.
 
-HTML doesn't need a templating syntax (e.g. `{{example}}`). Its structure is an
+HTML doesn't need a templating syntax. Its structure is an
 explicit hierarchy, which can be used to traverse arbitrary objects.
 
 ```html
