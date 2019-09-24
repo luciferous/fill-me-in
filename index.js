@@ -1,26 +1,47 @@
-function textContent() {
-    var _a = this, target = _a.target, value = _a.value;
-    target.textContent = value.toString();
+function newFunction(defn) {
+    var ix0 = defn.indexOf("function(");
+    if (ix0 == -1) {
+        return new Function(defn);
+    }
+    ix0 += "function(".length;
+    var ix1 = defn.indexOf(")", ix0);
+    if (ix1 == -1) {
+        throw new Error("expected ')' after index " + ix0 + ": " + defn);
+    }
+    ix1 += 1;
+    var ix2 = defn.indexOf("{", ix1);
+    if (ix2 == -1) {
+        throw new Error("expected '{' after index " + ix1 + ": " + defn);
+    }
+    ix2 += 1;
+    var ix3 = defn.lastIndexOf("}");
+    if (ix3 == -1) {
+        throw new Error("expected '}': " + defn);
+    }
+    var args = defn.substring(ix0, ix1 - 1);
+    var body = defn.substring(ix2, ix3);
+    return new Function(args, body);
 }
-function unpackObject() {
-    var _a = this, target = _a.target, value = _a.value;
-    if (typeof value !== "object")
+function textContent(e) {
+    this.textContent = e.value.toString();
+}
+function unpackObject(e) {
+    if (typeof e.value !== "object")
         return false;
-    for (var _i = 0, _b = Object.keys(value); _i < _b.length; _i++) {
-        var attr = _b[_i];
+    for (var _i = 0, _a = Object.keys(e.value); _i < _a.length; _i++) {
+        var attr = _a[_i];
         if (attr == "textContent") {
-            target.textContent = value[attr];
+            this.textContent = e.value[attr];
         }
         else {
-            target.setAttribute(attr, value[attr]);
+            this.setAttribute(attr, e.value[attr]);
         }
     }
 }
-function imageSource() {
-    var _a = this, target = _a.target, value = _a.value;
-    if (target.nodeName !== "IMG")
+function imageSource(e) {
+    if (this.nodeName !== "IMG")
         return false;
-    target.setAttribute("src", value.toString());
+    this.setAttribute("src", e.value.toString());
 }
 export var Modifiers = {
     textContent: textContent,
@@ -61,7 +82,8 @@ var defaultModifiers = [
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
- * @param modifier - How values modify the target element.
+ * @param replace - When true, replace the template with the rendered fragment.
+ * @param modifiers - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
 export function render(target, values, _a) {
@@ -128,9 +150,9 @@ function go(refs, modifiers) {
             }
             template.remove();
             if (target.hasAttribute("onempty") && value.length == 0) {
-                var handler = new Function(target.getAttribute("onempty"));
+                var handler = newFunction(target.getAttribute("onempty"));
                 target.removeAttribute("onempty");
-                handler.call(target);
+                handler.call(target, { target: target, value: "" });
             }
         }
         else {
@@ -142,7 +164,7 @@ function go(refs, modifiers) {
             else {
                 var appliedModifiers = void 0;
                 if (target.hasAttribute("onmodify")) {
-                    var modifier = (new Function(target.getAttribute("onmodify")));
+                    var modifier = newFunction(target.getAttribute("onmodify"));
                     target.removeAttribute("onmodify");
                     appliedModifiers = [modifier].concat(modifiers);
                 }
@@ -151,7 +173,7 @@ function go(refs, modifiers) {
                 }
                 for (var _b = 0, appliedModifiers_1 = appliedModifiers; _b < appliedModifiers_1.length; _b++) {
                     var modifier = appliedModifiers_1[_b];
-                    if (modifier.call({ target: target, value: value }) !== false)
+                    if (modifier.call(target, { target: target, value: value }) !== false)
                         break;
                 }
             }

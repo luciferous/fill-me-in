@@ -10,43 +10,70 @@ type Template = string | HTMLTemplateElement | DocumentFragment;
 type Values = { [key: string]: any };
 
 /**
- * Modifier describes how values modify target elements.
+ * Handler describes how values modify target elements.
  *
- * @param this an object with `element` and `value`
+ * @param this is the target element (identical to `e.target`)
+ * @param e an object with `element` and `value`
  */
-type Modifier = (this: { target: Element, value: string | Values }) => boolean | void
+type Handler = (this: Element, e: { target: Element, value: string | Values }) => boolean | void
 
-function textContent(this: { target: Element, value: string | Values }): boolean | void {
-  let { target, value } = this;
-  target.textContent = value.toString();
+function newFunction(defn: string): Function {
+  let ix0 = defn.indexOf("function(");
+  if (ix0 == -1) {
+    return new Function(defn);
+  }
+  ix0 += "function(".length;
+
+  let ix1 = defn.indexOf(")", ix0);
+  if (ix1 == -1) {
+    throw new Error(`expected ')' after index ${ix0}: ${defn}`);
+  }
+  ix1 += 1;
+
+  let ix2 = defn.indexOf("{", ix1);
+  if (ix2 == -1) {
+    throw new Error(`expected '{' after index ${ix1}: ${defn}`);
+  }
+  ix2 += 1;
+
+  let ix3 = defn.lastIndexOf("}");
+  if (ix3 == -1) {
+    throw new Error(`expected '}': ${defn}`);
+  }
+
+  let args = defn.substring(ix0, ix1 - 1);
+  let body = defn.substring(ix2, ix3);
+  return new Function(args, body);
 }
 
-function unpackObject(this: { target: Element, value: string | Values }): boolean | void {
-  let { target, value } = this;
-  if (typeof value !== "object") return false;
+function textContent(this: Element, e: { target: Element, value: string | Values }): boolean | void {
+  this.textContent = e.value.toString();
+}
 
-  for (let attr of Object.keys(value)) {
+function unpackObject(this: Element, e: { target: Element, value: string | Values }): boolean | void {
+  if (typeof e.value !== "object") return false;
+
+  for (let attr of Object.keys(e.value)) {
     if (attr == "textContent") {
-      target.textContent = value[attr];
+      this.textContent = e.value[attr];
     } else {
-      target.setAttribute(attr, value[attr]);
+      this.setAttribute(attr, e.value[attr]);
     }
   }
 }
 
-function imageSource(this: { target: Element, value: string | Values }): boolean | void {
-  let { target, value } = this;
-  if (target.nodeName !== "IMG") return false;
-  target.setAttribute("src", value.toString());
+function imageSource(this: Element, e: { target: Element, value: string | Values }): boolean | void {
+  if (this.nodeName !== "IMG") return false;
+  this.setAttribute("src", e.value.toString());
 }
 
-export const Modifiers: { [key:string]: Modifier } = {
+export const Modifiers: { [key:string]: Handler } = {
   textContent: textContent,
   unpackObject: unpackObject,
   imageSource: imageSource
 }
 
-const defaultModifiers: Modifier[] = [
+const defaultModifiers: Handler[] = [
   unpackObject,
   imageSource,
   textContent
@@ -81,7 +108,8 @@ const defaultModifiers: Modifier[] = [
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
- * @param modifier - How values modify the target element.
+ * @param replace - When true, replace the template with the rendered fragment.
+ * @param modifiers - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
 export function render(
@@ -112,7 +140,7 @@ export function render(
   }
 }
 
-function go(refs: [Element, Values][], modifiers: Modifier[]): void {
+function go(refs: [Element, Values][], modifiers: Handler[]): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
 
@@ -151,9 +179,9 @@ function go(refs: [Element, Values][], modifiers: Modifier[]): void {
       template.remove();
 
       if (target.hasAttribute("onempty") && value.length == 0) {
-        let handler = new Function(target.getAttribute("onempty")!);
+        let handler = <Handler>newFunction(target.getAttribute("onempty")!);
         target.removeAttribute("onempty");
-        handler.call(target);
+        handler.call(target, { target: target, value: "" });
       }
     } else {
       if (target.children.length > 0) {
@@ -161,16 +189,16 @@ function go(refs: [Element, Values][], modifiers: Modifier[]): void {
           refs.push([target.children[i], value]);
         }
       } else {
-        let appliedModifiers: Modifier[];
+        let appliedModifiers: Handler[];
         if (target.hasAttribute("onmodify")) {
-          let modifier = <Modifier>(new Function(target.getAttribute("onmodify")!));
+          let modifier = <Handler>newFunction(target.getAttribute("onmodify")!);
           target.removeAttribute("onmodify");
           appliedModifiers = [modifier].concat(modifiers);
         } else {
           appliedModifiers = modifiers;
         }
         for (let modifier of appliedModifiers) {
-          if (modifier.call({ target: target, value: value }) !== false) break;
+          if (modifier.call(target, { target: target, value: value }) !== false) break;
         }
       }
     }
