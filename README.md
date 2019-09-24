@@ -1,4 +1,4 @@
-![](logo_transparent.png =280x)
+![](logo_transparent.png)
 
 ***
 
