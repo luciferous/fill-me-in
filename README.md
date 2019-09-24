@@ -1,4 +1,4 @@
-<img src="logo_transparent.png" width=280>
+![](logo_transparent.png =280x)
 
 ***
 
