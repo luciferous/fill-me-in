@@ -1,8 +1,6 @@
 ![logo](https://lcfrs.org/fill-me-in/logo_transparent.png)
-
-*Lightweight templating for tiny web apps.*
-
 ***
+*Lightweight templating for tiny web apps.*
 
 HTML doesn't need special templating syntax: it has a
 [&lt;template&gt;](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template)
