@@ -1,3 +1,7 @@
+![logo](https://lcfrs.org/fill-me-in/logo_transparent.png)
+
+***
+
 *Lightweight templating for tiny web apps.*
 
 HTML doesn't need special templating syntax: it has a
