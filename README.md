@@ -1,67 +1,82 @@
-*Syntax-less* templating for HTML.
+*Lightweight templating for tiny web apps.*
 
-HTML doesn't need a templating syntax. Its structure is an
-explicit hierarchy, which can be used to traverse arbitrary objects.
+HTML doesn't need special templating syntax: it has a
+[&lt;template&gt;](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template)
+tag, and its nested structure maps naturally to JSON.
+
+## A quick example
+
+This HTML
 
 ```html
-<p slot="person">
-  <p slot="address">
-    <p slot="zip"></p>
+<h1>My favorite things</h1>
+<template>
+  <ul slot="things">
+    <template>
+      <li slot></li>
+    </template>
+  </ul>
+</template>
 ```
 
-looks a lot like
-
-```javascript
-{
-  person: {
-    address: {
-      zip: 12345
-```
-
-In the above example, the `slot` attributes specify the path (or index,
-i.e., `.person.address.zip`) through the object to the value `12345`.
-
-For simple templates, we are done here. The indexed value fills in the
-designated region, and so `<p slot="zip"></p>` becomes `<p>12345</p>`.
-
-But *filling in* the region isn't always how we want to transform it (see:
-[Images](#images) and [Links](#links)).
-
-## Have a look
-
-- [Demos](https://lcfrs.org/fill-me-in/demos.html)
-- [Tests](https://lcfrs.org/fill-me-in/tests.html)
-
-## The basics
-
-Start with an `import`.
+and this Javascript
 
 ```javascript
 import { render } from "https://unpkg.com/fill-me-in";
-```
 
-Applying `render` to
-
-```html
-<html>
-  <body>
-    <template id="template">
-      <p><span slot="greeting"></span>, <span slot="subject"></span>!</p>
-    </template>
-```
-
-and
-
-```javascript
-{ greeting: "Hello", subject: "world" }
+render("h1 + template", {
+  things: [
+    "Raindrops on roses",
+    "Whiskers on kittens",
+    "Bright copper kettles",
+    "Warm woolen mittens",
+    "Brown paper packages tied up with strings"
+  ]
+}, { replace: true });
 ```
 
 produces
 
+> # My favorite things
+> - Raindrops on roses
+> - Whiskers on kittens
+> - Bright copper kettles
+> - Warm woolen mittens
+> - Brown paper packages tied up with strings
+
+## Demos
+
+Ready to learn more? Let's have look at some demos!
+
+- [My Favorite Things](https://codepen.io/lcfrs/pen/mdbvmgd?editors=1010)
+- [Bingo Book](https://codepen.io/lcfrs/pen/WNeMGNg/?editors=1010)
+
+## Tests
+
+- [Tests](https://lcfrs.org/fill-me-in/tests.html)
+
+## The basics
+
+Define the template in HTML.
+
 ```html
-<html>
-  <body>
-    <p><span>Hello</span>, <span>world</span>!</p>
+<template id="template">
+  <p><span slot="greeting"></span>, <span slot="subject"></span>!</p>
+</template>
+```
+
+Call `render` on the template, passing it data.
+
+```javascript
+import { render } from "https://unpkg.com/fill-me-in";
+
+render("#template", { greeting: "Hello", subject: "world" }, { replace: true });
+```
+
+Render will *replace* the `<template>` with the following HTML.
+
+```html
+<p><span>Hello</span>, <span>world</span>!</p>
 ```
 
 ### Lists
@@ -198,19 +213,33 @@ produces
 
 ## Modifiers
 
-Templating isn't just about how to traverse the object, it's also about how to
-transform the designated region by the indexed value. The default
-transformation, that we earlier referred to as *filling in*, sets the
-`textContent` of the target element. The transformation for `<img>` is an
-extension, as is the transformation for when the value is an object.
+HTML has a nested structure that maps to JSON, but sometimes we need more
+flexibility. For `<img>`, we want to set the value of the `src` attribute. For
+`<a>` we want to set the value of `href` and `textContent`. The `render`
+function knows how to do all of this because of `modifiers`. Modifiers describe
+how to transform a target element by a value.
 
-These extensions are specified by `modifiers`. Modifiers are functions that
-describe how to transform a target element by a value. For example, this is a
-nonsense modifier to set every target element to "hello", ignoring the passed
-in value.
+The default modifier sets the `textContent` of the target.
 
 ```javascript
-render("#template", values, {
-  modifiers: [function() { this.target.textContent = "hello" }]
-});
+function(e) { e.target.textContent = e.value }
+```
+
+The `<img>` modifier sets the `src`.
+
+```javascript
+function(e) { e.target.src = e.value }
+```
+
+You can define your own custom modifiers.  This is a nonsense modifier to set
+every target element to "hello", ignoring the passed in value.
+
+```javascript
+function nonsense(e) { e.target.textContent = "hello" }
+```
+
+Pass it to render as a keyword arg.
+
+```javascript
+render(..., { modifiers: [nonsense] });
 ```
