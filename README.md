@@ -1,4 +1,4 @@
-![logo](https://lcfrs.org/fill-me-in/logo_transparent.png)
+<img src="logo_transparent.png" width=280>
 
 ***
 
