@@ -10,16 +10,17 @@ declare type Values = {
     [key: string]: any;
 };
 /**
- * Modifier describes how values modify target elements.
+ * Handler describes how values modify target elements.
  *
- * @param this an object with `element` and `value`
+ * @param this is the target element (identical to `e.target`)
+ * @param e an object with `element` and `value`
  */
-declare type Modifier = (this: {
+declare type Handler = (this: Element, e: {
     target: Element;
     value: string | Values;
 }) => boolean | void;
 export declare const Modifiers: {
-    [key: string]: Modifier;
+    [key: string]: Handler;
 };
 /**
  * Creates a document fragment from the given template and values.
@@ -50,11 +51,12 @@ export declare const Modifiers: {
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
- * @param modifier - How values modify the target element.
+ * @param replace - When true, replace the template with the rendered fragment.
+ * @param modifiers - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
 export declare function render(target: Template, values: Values, { replace, modifiers }?: {
     replace?: boolean | undefined;
-    modifiers?: Modifier[] | undefined;
+    modifiers?: Handler[] | undefined;
 }): DocumentFragment;
 export {};

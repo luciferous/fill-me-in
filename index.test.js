@@ -245,7 +245,7 @@ test("unpack object", () => {
 test("onmodify", () => {
   let got = render(
     mk(`
-<div slot="greeting" onmodify="this.target.textContent = this.value['ja']">Default text.</div>
+<div slot="greeting" onmodify="function(e) { this.textContent = e.value['ja'] }">Default text.</div>
     `),
     {
       greeting: {
@@ -276,4 +276,18 @@ test("replace=true", () => {
   let want = document.createElement("div");
   want.innerHTML = `<div>hello</div>`;
   assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("newFunction", () => {
+  let test = function(js) {
+    render(mk(`<p slot="test" onmodify="${js}"></p>`), { test: "hi" });
+  }
+
+  test("");
+  test("function(){}");
+  test("function(e){}");
+
+  assert.throws(() => test("a"), Error);
+  assert.throws(() => test("function("), Error);
+  assert.throws(() => test("function(){"), Error);
 });
