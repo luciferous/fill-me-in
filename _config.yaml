@@ -1,0 +1,4 @@
+plugins:
+  - jekyll-seo-tag
+
+logo: logo.png
