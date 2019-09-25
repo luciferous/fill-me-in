@@ -2,3 +2,9 @@ plugins:
   - jekyll-seo-tag
 
 logo: logo.png
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      image: logo.png
