@@ -10,6 +10,14 @@ type Template = string | HTMLTemplateElement | DocumentFragment;
 type Values = { [key: string]: any };
 
 /**
+ * Rendering options.
+ */
+interface Options {
+  replace: boolean,
+  modifiers: Handler[]
+}
+
+/**
  * Handler describes how values modify target elements.
  *
  * @param this is the target element (identical to `e.target`)
@@ -115,29 +123,34 @@ const defaultModifiers: Handler[] = [
 export function render(
   target: Template,
   values: Values,
-  { replace = false, modifiers = defaultModifiers } = {}
+  options: Options
 ): DocumentFragment {
+  options = Object.assign({
+    replace: false,
+    modifiers: defaultModifiers
+  }, options || {});
+
   if (typeof target === "string") {
     let template = document.querySelector(target);
     if (template instanceof HTMLTemplateElement) {
-      return render(template, values, { replace: replace, modifiers: modifiers });
+      return render(template, values, options);
     }
     throw new Error(`template not found: ${target}`);
   } else if (target instanceof HTMLTemplateElement) {
-    let fragment = render(document.importNode(target.content, true), values, { replace: replace, modifiers: modifiers });
-    if (target.parentElement && replace) {
+    let fragment = render(document.importNode(target.content, true), values, options);
+    if (target.parentElement && options.replace) {
       target.parentElement.insertBefore(fragment, target);
       target.remove();
     }
     return fragment;
-  } else {
-    let refs: [Element, Values][] = [];
-    for (let i = 0; i < target.children.length; i++) {
-      refs.push([target.children[i], values]);
-    }
-    go(refs, modifiers);
-    return target;
   }
+
+  let refs: [Element, Values][] = [];
+  for (let i = 0; i < target.children.length; i++) {
+    refs.push([target.children[i], values]);
+  }
+  go(refs, options.modifiers);
+  return target;
 }
 
 function go(refs: [Element, Values][], modifiers: Handler[]): void {
