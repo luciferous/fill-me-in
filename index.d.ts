@@ -10,6 +10,13 @@ declare type Values = {
     [key: string]: any;
 };
 /**
+ * Rendering options.
+ */
+interface Options {
+    replace: boolean;
+    modifiers: Handler[];
+}
+/**
  * Handler describes how values modify target elements.
  *
  * @param this is the target element (identical to `e.target`)
@@ -55,8 +62,5 @@ export declare const Modifiers: {
  * @param modifiers - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export declare function render(target: Template, values: Values, { replace, modifiers }?: {
-    replace?: boolean | undefined;
-    modifiers?: Handler[] | undefined;
-}): DocumentFragment;
+export declare function render(target: Template, values: Values, options: Options): DocumentFragment;
 export {};

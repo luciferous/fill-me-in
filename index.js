@@ -86,31 +86,32 @@ var defaultModifiers = [
  * @param modifiers - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export function render(target, values, _a) {
-    var _b = _a === void 0 ? {} : _a, _c = _b.replace, replace = _c === void 0 ? false : _c, _d = _b.modifiers, modifiers = _d === void 0 ? defaultModifiers : _d;
+export function render(target, values, options) {
+    options = Object.assign({
+        replace: false,
+        modifiers: defaultModifiers
+    }, options || {});
     if (typeof target === "string") {
         var template = document.querySelector(target);
         if (template instanceof HTMLTemplateElement) {
-            return render(template, values, { replace: replace, modifiers: modifiers });
+            return render(template, values, options);
         }
         throw new Error("template not found: " + target);
     }
     else if (target instanceof HTMLTemplateElement) {
-        var fragment = render(document.importNode(target.content, true), values, { replace: replace, modifiers: modifiers });
-        if (target.parentElement && replace) {
+        var fragment = render(document.importNode(target.content, true), values, options);
+        if (target.parentElement && options.replace) {
             target.parentElement.insertBefore(fragment, target);
             target.remove();
         }
         return fragment;
     }
-    else {
-        var refs = [];
-        for (var i = 0; i < target.children.length; i++) {
-            refs.push([target.children[i], values]);
-        }
-        go(refs, modifiers);
-        return target;
+    var refs = [];
+    for (var i = 0; i < target.children.length; i++) {
+        refs.push([target.children[i], values]);
     }
+    go(refs, options.modifiers);
+    return target;
 }
 function go(refs, modifiers) {
     while (refs.length > 0) {
