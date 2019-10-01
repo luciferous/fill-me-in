@@ -56,7 +56,7 @@ const defaultMods = [
  * the DOM with the rendered document fragment. For example, running
  *
  * ```
- * render("#name" , { vicks: "wedge" });
+ * renderFragment("#name" , { vicks: "wedge" });
  * ```
  *
  * on the HTML document
@@ -76,35 +76,15 @@ const defaultMods = [
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
- * @param replace - When true, replace the template with the rendered fragment.
  * @param mods - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export function render(target, values, options) {
-    options = Object.assign({
-        replace: false,
-        mods: defaultMods
-    }, options || {});
-    if (typeof target === "string") {
-        let template = document.querySelector(target);
-        if (template instanceof HTMLTemplateElement) {
-            return render(template, values, options);
-        }
-        throw new Error(`template not found: ${target}`);
-    }
-    else if (target instanceof HTMLTemplateElement) {
-        let fragment = render(document.importNode(target.content, true), values, options);
-        if (target.parentElement && options.replace) {
-            target.parentElement.insertBefore(fragment, target);
-            target.remove();
-        }
-        return fragment;
-    }
+export function renderFragment(target, values, mods = defaultMods) {
     let refs = [];
     for (let i = 0; i < target.children.length; i++) {
         refs.push([target.children[i], values]);
     }
-    go(refs, options.mods);
+    go(refs, mods);
     return target;
 }
 function go(refs, mods) {
@@ -173,3 +153,185 @@ function go(refs, mods) {
         }
     }
 }
+function identity(t) {
+    return t;
+}
+/**
+ * API is series of API terms, that when run, produces a DocumentFragment.
+ */
+class API {
+    asFragment() {
+        return this.run({ mods: identity, process: identity });
+    }
+    into(target) {
+        if (typeof target === "string") {
+            let element = document.querySelector(target);
+            if (element instanceof HTMLElement) {
+                return this.into(element);
+            }
+            else {
+                return Promise.reject(new Error(`target not found: ${target}`));
+            }
+        }
+        return this.asFragment().then(function (fragment) {
+            target.innerHTML = "";
+            target.appendChild(fragment);
+            return Promise.resolve(fragment);
+        });
+    }
+}
+/**
+ * AndThen is combinator for sequencing API terms.
+ */
+class AndThen extends API {
+    constructor(term, next) {
+        super();
+        this.term = term;
+        this.next = next;
+    }
+    withMods(mods) {
+        return new AndThen(this.term, this.next.withMods(mods));
+    }
+    withValues(values) {
+        return new AndThen(this.term, this.next.withValues(values));
+    }
+    withProcess(process) {
+        return new AndThen(this.term, this.next.withProcess(process));
+    }
+    run(state) {
+        switch (this.term.kind) {
+            case "render":
+                state.template = this.term.template;
+                let self = this;
+                return fetchValues(this.term.template).then(function (values) {
+                    if (values)
+                        state.values = values;
+                    return self.next.run(state);
+                });
+            case "withvalues":
+                state.values = this.term.values;
+                return this.next.run(state);
+            case "withmods":
+                state.mods = this.term.mods;
+                return this.next.run(state);
+            case "withprocess":
+                let current = state.process;
+                let process = this.term.process;
+                state.process = (values) => process(current(values));
+                return this.next.run(state);
+        }
+    }
+    equals(other) {
+        return other instanceof AndThen &&
+            other.term === this.term &&
+            this.next.equals(other.next);
+    }
+    toString() {
+        return `AndThen(${this.term.toString()}, ${this.next.toString()})`;
+    }
+}
+/**
+ * Done is the last term in an API term sequence.
+ */
+class Done extends API {
+    constructor(term) {
+        super();
+        this.term = term;
+    }
+    withMods(mods) {
+        return new AndThen(this.term, new Done({ kind: "withmods", mods: mods }));
+    }
+    withValues(values) {
+        return new AndThen(this.term, new Done({ kind: "withvalues", values: values }));
+    }
+    withProcess(process) {
+        return new AndThen(this.term, new Done({ kind: "withprocess", process: process }));
+    }
+    run(state) {
+        switch (this.term.kind) {
+            case "render":
+                state.template = this.term.template;
+                return fetchValues(state.template).then(function (values) {
+                    if (values)
+                        state.values = values;
+                    return runState(state);
+                });
+            case "withvalues":
+                state.values = this.term.values;
+                return runState(state);
+            case "withmods":
+                state.mods = this.term.mods;
+                return runState(state);
+            case "withprocess":
+                let current = state.process;
+                let process = this.term.process;
+                state.process = (values) => process(current(values));
+                return runState(state);
+        }
+    }
+    equals(other) {
+        return other instanceof Done && other.term === this.term;
+    }
+    toString() {
+        return `Done(${this.term.toString()})`;
+    }
+}
+/**
+ * runState runs renderFragment with arguments sourced from State.
+ */
+function runState(state) {
+    if (!state.template)
+        return Promise.reject(new Error("missing template"));
+    if (!state.values)
+        return Promise.reject(new Error("missing values"));
+    let target = document.importNode(state.template.content, true);
+    let values = state.process(state.values);
+    let mods = state.mods(defaultMods);
+    return Promise.resolve(renderFragment(target, values, mods));
+}
+/**
+ * fetchValues fetches JSON from an element's `data-src` attribute, if present.
+ */
+function fetchValues(element) {
+    let dataURL = element.getAttribute("data-src");
+    if (!dataURL) {
+        return Promise.resolve(undefined);
+    }
+    return fetch(dataURL).then(function (response) {
+        return response.json().then(function (values) {
+            return Promise.resolve(values);
+        });
+    });
+}
+/**
+ * render initializes an API expression.
+ *
+ * ```
+ * render("#template").withValues({ hello: "world" }).into("#content");
+ * ```
+ *
+ * @param target a string representing the template, or the template itself.
+ */
+export function render(target) {
+    if (typeof target === "string") {
+        let template = document.querySelector(target);
+        if (template instanceof HTMLTemplateElement) {
+            return render(template);
+        }
+        else {
+            throw new Error(`template not found: ${target}`);
+        }
+    }
+    return new Done({ kind: "render", template: target });
+}
+// Automatically do things.
+document.querySelectorAll("template[data-embed]").forEach(function (template) {
+    if (!(template instanceof HTMLTemplateElement))
+        return;
+    if (!template.parentElement)
+        return;
+    let parentElement = template.parentElement;
+    render(template).asFragment().then(function (fragment) {
+        parentElement.appendChild(fragment);
+    });
+});
