@@ -1,6 +1,6 @@
 "use strict";
 
-import { render } from "./index.js";
+import { render, renderFragment } from "./index.js";
 
 function mk(html) {
   let template = document.createElement("template");
@@ -30,7 +30,7 @@ function normalize(node) {
 }
 
 test("object", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <div slot="greeting"></div>
     `),
@@ -45,7 +45,7 @@ test("object", () => {
 });
 
 test("nested object", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <div slot="greeting">
   <div>
@@ -73,7 +73,7 @@ test("nested object", () => {
 });
 
 test("arrays", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <ul slot="fruit">
   <template><li slot></li></template>
@@ -98,7 +98,7 @@ test("arrays", () => {
 });
 
 test("nested arrays", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <ul slot="recipes">
   <template>
@@ -146,7 +146,7 @@ test("nested arrays", () => {
 });
 
 test("onempty", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <div>
   <ul slot="fruit" onempty="this.remove()">
@@ -168,7 +168,7 @@ test("onempty", () => {
 });
 
 test("defaults", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <div slot="greeting">Default text.</div>
     `),
@@ -182,7 +182,7 @@ test("defaults", () => {
 });
 
 test("nested template", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <table slot="albums">
   <tbody>
@@ -225,7 +225,7 @@ test("nested template", () => {
 });
 
 test("unpack object", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <div slot="greeting">Default text.</div>
     `),
@@ -243,7 +243,7 @@ test("unpack object", () => {
 });
 
 test("onmodify", () => {
-  let got = render(
+  let got = renderFragment(
     mk(`
 <div slot="greeting" onmodify="function(e) { this.textContent = e.value['ja'] }">Default text.</div>
     `),
@@ -260,27 +260,9 @@ test("onmodify", () => {
   assert(got.isEqualNode(want), diff(got, want));
 });
 
-test("replace=false", () => {
-  let got = document.createElement("div");
-  got.innerHTML = `<template><div slot="greeting"></div></template>`;
-  render(got.querySelector("template"), { greeting: "hello" }, { replace: false });
-  let want = document.createElement("div");
-  want.innerHTML = `<template><div slot="greeting"></div></template>`;
-  assert(got.isEqualNode(want), diff(got, want));
-});
-
-test("replace=true", () => {
-  let got = document.createElement("div");
-  got.innerHTML = `<template><div slot="greeting"></div></template>`;
-  render(got.querySelector("template"), { greeting: "hello" }, { replace: true });
-  let want = document.createElement("div");
-  want.innerHTML = `<div>hello</div>`;
-  assert(got.isEqualNode(want), diff(got, want));
-});
-
 test("newFunction", () => {
   let test = function(js) {
-    render(mk(`<p slot="test" onmodify="${js}"></p>`), { test: "hi" });
+    renderFragment(mk(`<p slot="test" onmodify="${js}"></p>`), { test: "hi" });
   }
 
   test("");

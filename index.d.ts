@@ -1,21 +1,9 @@
 /**
- * Template is a reference to a template. It can be a selector string,
- * `<template>`, or a document fragment.
- */
-declare type Template = string | HTMLTemplateElement | DocumentFragment;
-/**
  * Values is the type of a plain old JavaScript object.
  */
 declare type Values = {
     [key: string]: any;
 };
-/**
- * Rendering options.
- */
-interface Options {
-    replace: boolean;
-    mods: Mod[];
-}
 /**
  * Mod describes how values modify target elements.
  *
@@ -35,7 +23,7 @@ declare type Mod = (this: Element, e: {
  * the DOM with the rendered document fragment. For example, running
  *
  * ```
- * render("#name" , { vicks: "wedge" });
+ * renderFragment("#name" , { vicks: "wedge" });
  * ```
  *
  * on the HTML document
@@ -55,9 +43,40 @@ declare type Mod = (this: Element, e: {
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
- * @param replace - When true, replace the template with the rendered fragment.
  * @param mods - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export declare function render(target: Template, values: Values, options: Options): DocumentFragment;
+export declare function renderFragment(target: DocumentFragment, values: Values, mods?: Mod[]): DocumentFragment;
+/**
+ * State generated while processing API expression.
+ */
+declare type State = {
+    template?: HTMLTemplateElement;
+    values?: Values;
+    mods: (mods: Mod[]) => Mod[];
+    process: (values: Values) => Values;
+};
+/**
+ * API is series of API terms, that when run, produces a DocumentFragment.
+ */
+declare abstract class API {
+    abstract run(state: State): Promise<DocumentFragment>;
+    abstract withMods(mods: (mods: Mod[]) => Mod[]): API;
+    abstract withValues(values: Values): API;
+    abstract withProcess(process: (values: Values) => Values): API;
+    abstract equals(other: API): boolean;
+    abstract toString(): string;
+    asFragment(): Promise<DocumentFragment>;
+    into(target: string | HTMLElement): Promise<DocumentFragment>;
+}
+/**
+ * render initializes an API expression.
+ *
+ * ```
+ * render("#template").withValues({ hello: "world" }).into("#content");
+ * ```
+ *
+ * @param target a string representing the template, or the template itself.
+ */
+export declare function render(target: string | HTMLTemplateElement): API;
 export {};

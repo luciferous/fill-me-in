@@ -1,45 +1,45 @@
 ![](logo_transparent.png)
 
-***
-
-*Lightweight templating for tiny web apps.*
-
-HTML doesn't need special templating syntax: it has a
-[&lt;template&gt;](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template)
-tag, and its nested structure maps naturally to JSON.
+******
+*HTML templating without Javascript.*
 
 ## A quick example
 
-This HTML
+Let's say you keep a list of things you like in a file called `favorites.json`.
+It looks like this.
 
-```html
-<h1>My favorite things</h1>
-<template>
-  <ul slot="things">
-    <template>
-      <li slot></li>
-    </template>
-  </ul>
-</template>
-```
-
-and this Javascript
-
-```javascript
-import { render } from "https://unpkg.com/fill-me-in";
-
-render("h1 + template", {
-  things: [
+```json
+{
+  "things": [
     "Raindrops on roses",
     "Whiskers on kittens",
     "Bright copper kettles",
     "Warm woolen mittens",
     "Brown paper packages tied up with strings"
   ]
-}, { replace: true });
+}
 ```
 
-produces
+And, you want to display this list on a website. HTML has a
+[&lt;template&gt;](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template)
+tag, so let's use that.
+
+```html
+<h1>My favorite things</h1>
+<template data-src="/favorites.json" data-embed>
+  <ul slot="things">
+    <template>
+      <li slot></li>
+    </template>
+  </ul>
+</template>
+<script type="module" src="https://unpkg.com/fill-me-in"></script>
+```
+
+The `data-src` attribute specifies the data source for this template. The
+`data-embed` attribute tells the library to render the template automatically.
+
+So, the HTML above produces
 
 > # My favorite things
 > - Raindrops on roses
@@ -48,9 +48,9 @@ produces
 > - Warm woolen mittens
 > - Brown paper packages tied up with strings
 
-## Demos
+Ready to try it out for yourself? Have a look at the demos in the next section.
 
-Ready to learn more? Let's have look at some demos!
+## Demos
 
 - [My Favorite Things](https://codepen.io/lcfrs/pen/mdbvmgd?editors=1010)
 - [Bingo Book](https://codepen.io/lcfrs/pen/WNeMGNg/?editors=1010)
@@ -59,29 +59,53 @@ Ready to learn more? Let's have look at some demos!
 
 - [Tests](https://lcfrs.org/fill-me-in/tests.html)
 
-## The basics
+## API
 
-Define the template in HTML.
+For simple websites, an HTML `<template>` and a `data-src` might be enough. But
+when you want more power and control, the Javascript API is the way to go.
 
-```html
-<template id="template">
-  <p><span slot="greeting"></span>, <span slot="subject"></span>!</p>
-</template>
-```
-
-Call `render` on the template, passing it data.
+Everything starts with the `render`, which takes a single parameter we will
+call the *target*. The target can be a selector string of a template element,
+or the template element itself.
 
 ```javascript
-import { render } from "https://unpkg.com/fill-me-in";
-
-render("#template", { greeting: "Hello", subject: "world" }, { replace: true });
+render("template").into("#content");
 ```
 
-Render will *replace* the `<template>` with the following HTML.
+`render` works by chaining actions together. `into` is an instruction to the
+renderer to replace the content of `#content` with the rendered output.
 
-```html
-<p><span>Hello</span>, <span>world</span>!</p>
+### withValues
+
+`withValues` allows you to specify the data source as a Javascript object,
+overriding `data-src`.
+
+```javascript
+render("template").withValues({
+  things: [
+    "Raindrops on roses",
+    "Whiskers on kittens",
+    "Bright copper kettles",
+    "Warm woolen mittens",
+    "Brown paper packages tied up with strings"
+  ]
+}).into("#content");
 ```
+
+### withProcess
+
+`withProcess` transforms the data from the data source.
+
+```javascript
+render("template").withProcess(function(values) {
+  values.things.push("HTML templates");
+  return values;
+}).into("#content");
+```
+
+## Common scenarios
+
+Some common scenarios follow.
 
 ### Lists
 
@@ -242,8 +266,8 @@ every target element to "hello", ignoring the passed in value.
 function nonsense(e) { e.target.textContent = "hello" }
 ```
 
-Pass it to render as a keyword arg.
+Pass it to render via `withMods`.
 
 ```javascript
-render(..., { mods: [nonsense] });
+renderFragment.withMods(function(mods) { return [nonsense]; });
 ```
