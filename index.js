@@ -42,12 +42,7 @@ function imageSource(e) {
         return false;
     this.setAttribute("src", e.value.toString());
 }
-export const Modifiers = {
-    textContent: textContent,
-    unpackObject: unpackObject,
-    imageSource: imageSource
-};
-const defaultModifiers = [
+const defaultMods = [
     unpackObject,
     imageSource,
     textContent
@@ -82,13 +77,13 @@ const defaultModifiers = [
  * @param target - The template.
  * @param values - The values to insert into template slots.
  * @param replace - When true, replace the template with the rendered fragment.
- * @param modifiers - How values modify the target element.
+ * @param mods - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
 export function render(target, values, options) {
     options = Object.assign({
         replace: false,
-        modifiers: defaultModifiers
+        mods: defaultMods
     }, options || {});
     if (typeof target === "string") {
         let template = document.querySelector(target);
@@ -109,10 +104,10 @@ export function render(target, values, options) {
     for (let i = 0; i < target.children.length; i++) {
         refs.push([target.children[i], values]);
     }
-    go(refs, options.modifiers);
+    go(refs, options.mods);
     return target;
 }
-function go(refs, modifiers) {
+function go(refs, mods) {
     while (refs.length > 0) {
         let [node, values] = refs.pop();
         let target;
@@ -161,17 +156,17 @@ function go(refs, modifiers) {
                 }
             }
             else {
-                let appliedModifiers;
+                let appliedMods = [];
                 if (target.hasAttribute("onmodify")) {
-                    let modifier = newFunction(target.getAttribute("onmodify"));
+                    let mod = newFunction(target.getAttribute("onmodify"));
                     target.removeAttribute("onmodify");
-                    appliedModifiers = [modifier].concat(modifiers);
+                    appliedMods = [mod].concat(mods);
                 }
                 else {
-                    appliedModifiers = modifiers;
+                    appliedMods = mods;
                 }
-                for (let modifier of appliedModifiers) {
-                    if (modifier.call(target, { target: target, value: value }) !== false)
+                for (let mod of appliedMods) {
+                    if (mod.call(target, { target: target, value: value }) !== false)
                         break;
                 }
             }
