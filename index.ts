@@ -14,16 +14,16 @@ type Values = { [key: string]: any };
  */
 interface Options {
   replace: boolean,
-  modifiers: Handler[]
+  mods: Mod[]
 }
 
 /**
- * Handler describes how values modify target elements.
+ * Mod describes how values modify target elements.
  *
  * @param this is the target element (identical to `e.target`)
  * @param e an object with `element` and `value`
  */
-type Handler = (this: Element, e: { target: Element, value: string | Values }) => boolean | void
+type Mod = (this: Element, e: { target: Element, value: string | Values }) => boolean | void
 
 function newFunction(defn: string): Function {
   let ix0 = defn.indexOf("function(");
@@ -54,6 +54,7 @@ function newFunction(defn: string): Function {
   return new Function(args, body);
 }
 
+
 function textContent(this: Element, e: { target: Element, value: string | Values }): boolean | void {
   this.textContent = e.value.toString();
 }
@@ -75,13 +76,7 @@ function imageSource(this: Element, e: { target: Element, value: string | Values
   this.setAttribute("src", e.value.toString());
 }
 
-export const Modifiers: { [key:string]: Handler } = {
-  textContent: textContent,
-  unpackObject: unpackObject,
-  imageSource: imageSource
-}
-
-const defaultModifiers: Handler[] = [
+const defaultMods: Mod[] = [
   unpackObject,
   imageSource,
   textContent
@@ -117,7 +112,7 @@ const defaultModifiers: Handler[] = [
  * @param target - The template.
  * @param values - The values to insert into template slots.
  * @param replace - When true, replace the template with the rendered fragment.
- * @param modifiers - How values modify the target element.
+ * @param mods - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
 export function render(
@@ -127,7 +122,7 @@ export function render(
 ): DocumentFragment {
   options = Object.assign({
     replace: false,
-    modifiers: defaultModifiers
+    mods: defaultMods
   }, options || {});
 
   if (typeof target === "string") {
@@ -149,11 +144,11 @@ export function render(
   for (let i = 0; i < target.children.length; i++) {
     refs.push([target.children[i], values]);
   }
-  go(refs, options.modifiers);
+  go(refs, options.mods);
   return target;
 }
 
-function go(refs: [Element, Values][], modifiers: Handler[]): void {
+function go(refs: [Element, Values][], mods: Mod[]): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
 
@@ -192,7 +187,7 @@ function go(refs: [Element, Values][], modifiers: Handler[]): void {
       template.remove();
 
       if (target.hasAttribute("onempty") && value.length == 0) {
-        let handler = <Handler>newFunction(target.getAttribute("onempty")!);
+        let handler = <Mod>newFunction(target.getAttribute("onempty")!);
         target.removeAttribute("onempty");
         handler.call(target, { target: target, value: "" });
       }
@@ -202,16 +197,16 @@ function go(refs: [Element, Values][], modifiers: Handler[]): void {
           refs.push([target.children[i], value]);
         }
       } else {
-        let appliedModifiers: Handler[];
+        let appliedMods: Mod[] = [];
         if (target.hasAttribute("onmodify")) {
-          let modifier = <Handler>newFunction(target.getAttribute("onmodify")!);
+          let mod = <Mod>newFunction(target.getAttribute("onmodify")!);
           target.removeAttribute("onmodify");
-          appliedModifiers = [modifier].concat(modifiers);
+          appliedMods = [mod].concat(mods);
         } else {
-          appliedModifiers = modifiers;
+          appliedMods = mods;
         }
-        for (let modifier of appliedModifiers) {
-          if (modifier.call(target, { target: target, value: value }) !== false) break;
+        for (let mod of appliedMods) {
+          if (mod.call(target, { target: target, value: value }) !== false) break;
         }
       }
     }

@@ -215,27 +215,27 @@ produces
 <a href="http://example.com/">Example</a>
 ```
 
-## Modifiers
+## Mods (short for modifiers)
 
 HTML has a nested structure that maps to JSON, but sometimes we need more
 flexibility. For `<img>`, we want to set the value of the `src` attribute. For
 `<a>` we want to set the value of `href` and `textContent`. The `render`
-function knows how to do all of this because of `modifiers`. Modifiers describe
+function knows how to do all of this because of *mods*. Mods describe
 how to transform a target element by a value.
 
-The default modifier sets the `textContent` of the target.
+The default mod sets the `textContent` of the target.
 
 ```javascript
 function(e) { e.target.textContent = e.value }
 ```
 
-The `<img>` modifier sets the `src`.
+The `<img>` mod sets the `src`.
 
 ```javascript
 function(e) { e.target.src = e.value }
 ```
 
-You can define your own custom modifiers.  This is a nonsense modifier to set
+You can define your own custom mods.  This is a nonsense modifier to set
 every target element to "hello", ignoring the passed in value.
 
 ```javascript
@@ -245,5 +245,5 @@ function nonsense(e) { e.target.textContent = "hello" }
 Pass it to render as a keyword arg.
 
 ```javascript
-render(..., { modifiers: [nonsense] });
+render(..., { mods: [nonsense] });
 ```
