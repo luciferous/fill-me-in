@@ -11,7 +11,18 @@ interface Values {
   [key: string]: any
 };
 
+/**
+ * `Data` is the type of renderable values;
+ */
 type Data = Values | Values[];
+
+/**
+ * `ModEvent` wraps the target element and the incoming value.
+ */
+interface ModEvent {
+  target: Element
+  value: string | Values
+}
 
 /**
  * `Mod` describes how values modify target elements.
@@ -19,7 +30,7 @@ type Data = Values | Values[];
  * @param this - is the target element (identical to `e.target`)
  * @param e - an object with `element` and `value`
  */
-type Mod = (this: Element, e: { target: Element, value: string | Values }) => boolean | void
+type Mod = (this: Element, e: ModEvent) => boolean | void
 
 function newFunction(defn: string): Function {
   let ix0 = defn.indexOf("function(");
@@ -50,11 +61,11 @@ function newFunction(defn: string): Function {
   return new Function(args, body);
 }
 
-function textContent(this: Element, e: { target: Element, value: string | Values }): boolean | void {
+function textContent(this: Element, e: ModEvent): boolean | void {
   this.textContent = e.value.toString();
 }
 
-function unpackObject(this: Element, e: { target: Element, value: string | Values }): boolean | void {
+function unpackObject(this: Element, e: ModEvent): boolean | void {
   if (typeof e.value !== "object") return false;
 
   for (let attr of Object.keys(e.value)) {
@@ -66,7 +77,7 @@ function unpackObject(this: Element, e: { target: Element, value: string | Value
   }
 }
 
-function imageSource(this: Element, e: { target: Element, value: string | Values }): boolean | void {
+function imageSource(this: Element, e: ModEvent): boolean | void {
   if (this.nodeName !== "IMG") return false;
   this.setAttribute("src", e.value.toString());
 }

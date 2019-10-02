@@ -4,17 +4,24 @@
 interface Values {
     [key: string]: any;
 }
+/**
+ * `Data` is the type of renderable values;
+ */
 declare type Data = Values | Values[];
+/**
+ * `ModEvent` wraps the target element and the incoming value.
+ */
+interface ModEvent {
+    target: Element;
+    value: string | Values;
+}
 /**
  * `Mod` describes how values modify target elements.
  *
  * @param this - is the target element (identical to `e.target`)
  * @param e - an object with `element` and `value`
  */
-declare type Mod = (this: Element, e: {
-    target: Element;
-    value: string | Values;
-}) => boolean | void;
+declare type Mod = (this: Element, e: ModEvent) => boolean | void;
 /**
  * Creates a document fragment from the given template and values.
  *
