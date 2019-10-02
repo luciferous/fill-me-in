@@ -342,10 +342,20 @@ async function runState(state: State): Promise<DocumentFragment> {
   if (!state.template) return Promise.reject(new Error("missing template"));
   if (!state.values) return Promise.reject(new Error("missing values"));
 
-  let target = document.importNode(state.template.content, true);
   let values = state.process(state.values);
   let mods = state.mods(defaultMods);
-  return Promise.resolve(renderFragment(target, values, mods));
+
+  if (Array.isArray(values)) {
+    let fragment = document.createDocumentFragment();
+    for (let i = 0; i < values.length; i++) {
+      let target = document.importNode(state.template.content, true);
+      fragment.appendChild(renderFragment(target, values[i], mods));
+    }
+    return fragment;
+  }
+
+  let target = document.importNode(state.template.content, true);
+  return renderFragment(target, values, mods);
 }
 
 /**

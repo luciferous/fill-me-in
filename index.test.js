@@ -72,6 +72,28 @@ test("nested object", () => {
   assert(got.isEqualNode(want), diff(got, want));
 });
 
+test("bare array", async () => {
+  let div = document.createElement("div");
+  div.innerHTML = `
+<template><li slot></li></template
+`;
+  let got = await render(
+    div.querySelector("template")
+  ).withValues(
+    [
+      "apple",
+      "orange"
+    ]
+  ).asFragment();
+  let want = mk(`
+<li>apple</li>
+<li>orange</li>
+  `);
+  normalize(got);
+  normalize(want);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
 test("arrays", () => {
   let got = renderFragment(
     mk(`
