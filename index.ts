@@ -305,12 +305,10 @@ class AndThen extends API {
         state.values = this.term.values;
         return this.next.run(state);
       case "withmods":
-        state.mods = this.term.mods;
+        state.mods = compose(this.term.mods, state.mods);
         return this.next.run(state);
       case "withprocess":
-        let current = state.process;
-        let process = this.term.process;
-        state.process = (values: Data) => process(current(values));
+        state.process = compose(this.term.process, state.process);
         return this.next.run(state);
     }
   }
@@ -353,7 +351,7 @@ class Done extends API {
         state.values = this.term.values;
         return runState(state);
       case "withmods":
-        state.mods = this.term.mods;
+        state.mods = compose(this.term.mods, state.mods);
         return runState(state);
       case "withprocess":
         state.process = compose(this.term.process, state.process);
