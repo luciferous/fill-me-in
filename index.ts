@@ -398,11 +398,8 @@ async function fetchValues(element: HTMLElement): Promise<Data | undefined> {
     return Promise.resolve(undefined);
   }
 
-  return fetch(dataURL).then(function(response) {
-    return response.json().then(function(values) {
-      return Promise.resolve(values);
-    });
-  });
+  const response = await fetch(dataURL);
+  return response.json();
 }
 
 /**
@@ -427,11 +424,9 @@ export function render(target: string | HTMLTemplateElement): API {
 }
 
 // Automatically do things.
-document.querySelectorAll("template[data-embed]").forEach(function(template) {
+document.querySelectorAll("template[data-embed]").forEach(async function(template) {
   if (!(template instanceof HTMLTemplateElement)) return;
   if (!template.parentElement) return;
-  let parentElement: Element = template.parentElement;
-  render(template).asFragment().then(function(fragment: DocumentFragment) {
-    parentElement.appendChild(fragment);
-  });
+  const fragment = await render(template).asFragment();
+  template.parentElement.appendChild(fragment);
 });

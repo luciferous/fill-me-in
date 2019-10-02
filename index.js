@@ -315,11 +315,8 @@ async function fetchValues(element) {
     if (!dataURL) {
         return Promise.resolve(undefined);
     }
-    return fetch(dataURL).then(function (response) {
-        return response.json().then(function (values) {
-            return Promise.resolve(values);
-        });
-    });
+    const response = await fetch(dataURL);
+    return response.json();
 }
 /**
  * `render` initializes an API expression.
@@ -343,13 +340,11 @@ export function render(target) {
     return new Done({ kind: "render", template: target });
 }
 // Automatically do things.
-document.querySelectorAll("template[data-embed]").forEach(function (template) {
+document.querySelectorAll("template[data-embed]").forEach(async function (template) {
     if (!(template instanceof HTMLTemplateElement))
         return;
     if (!template.parentElement)
         return;
-    let parentElement = template.parentElement;
-    render(template).asFragment().then(function (fragment) {
-        parentElement.appendChild(fragment);
-    });
+    const fragment = await render(template).asFragment();
+    template.parentElement.appendChild(fragment);
 });
