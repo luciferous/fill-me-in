@@ -153,14 +153,17 @@ function go(refs, mods) {
 function identity(t) {
     return t;
 }
+function compose(g, f) {
+    return a => g(f(a));
+}
 /**
  * API is series of API terms, that when run, produces a DocumentFragment.
  */
 class API {
-    asFragment() {
+    async asFragment() {
         return this.run({ mods: identity, process: identity });
     }
-    into(target) {
+    async into(target) {
         if (typeof target === "string") {
             let element = document.querySelector(target);
             if (element instanceof HTMLElement) {
@@ -170,11 +173,10 @@ class API {
                 return Promise.reject(new Error(`target not found: ${target}`));
             }
         }
-        return this.asFragment().then(function (fragment) {
-            target.innerHTML = "";
-            target.appendChild(fragment);
-            return Promise.resolve(fragment);
-        });
+        const fragment = await this.asFragment();
+        target.innerHTML = "";
+        target.appendChild(fragment);
+        return fragment;
     }
 }
 /**
@@ -195,16 +197,15 @@ class AndThen extends API {
     withProcess(process) {
         return new AndThen(this.term, this.next.withProcess(process));
     }
-    run(state) {
+    async run(state) {
         switch (this.term.kind) {
             case "render":
                 state.template = this.term.template;
                 let self = this;
-                return fetchValues(this.term.template).then(function (values) {
-                    if (values)
-                        state.values = values;
-                    return self.next.run(state);
-                });
+                const values = await fetchValues(this.term.template);
+                if (values)
+                    state.values = values;
+                return self.next.run(state);
             case "withvalues":
                 state.values = this.term.values;
                 return this.next.run(state);
@@ -244,15 +245,14 @@ class Done extends API {
     withProcess(process) {
         return new AndThen(this.term, new Done({ kind: "withprocess", process: process }));
     }
-    run(state) {
+    async run(state) {
         switch (this.term.kind) {
             case "render":
                 state.template = this.term.template;
-                return fetchValues(state.template).then(function (values) {
-                    if (values)
-                        state.values = values;
-                    return runState(state);
-                });
+                const values = await fetchValues(state.template);
+                if (values)
+                    state.values = values;
+                return runState(state);
             case "withvalues":
                 state.values = this.term.values;
                 return runState(state);
@@ -260,9 +260,7 @@ class Done extends API {
                 state.mods = this.term.mods;
                 return runState(state);
             case "withprocess":
-                let current = state.process;
-                let process = this.term.process;
-                state.process = (values) => process(current(values));
+                state.process = compose(this.term.process, state.process);
                 return runState(state);
         }
     }
@@ -276,7 +274,7 @@ class Done extends API {
 /**
  * runState runs renderFragment with arguments sourced from State.
  */
-function runState(state) {
+async function runState(state) {
     if (!state.template)
         return Promise.reject(new Error("missing template"));
     if (!state.values)
@@ -289,7 +287,7 @@ function runState(state) {
 /**
  * fetchValues fetches JSON from an element's `data-src` attribute, if present.
  */
-function fetchValues(element) {
+async function fetchValues(element) {
     let dataURL = element.getAttribute("data-src");
     if (!dataURL) {
         return Promise.resolve(undefined);

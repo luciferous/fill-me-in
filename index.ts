@@ -204,11 +204,15 @@ function identity<T>(t: T): T {
   return t;
 }
 
+function compose<A, B, C>(g: (b: B) => C, f: (a: A) => B): (a: A) => C {
+  return a => g(f(a));
+}
+
 /**
  * API is series of API terms, that when run, produces a DocumentFragment.
  */
 abstract class API {
-  abstract run(state: State): Promise<DocumentFragment>
+  abstract async run(state: State): Promise<DocumentFragment>
 
   abstract withMods(mods: (mods: Mod[]) => Mod[]): API
   abstract withValues(values: Values): API
@@ -216,11 +220,11 @@ abstract class API {
   abstract equals(other: API): boolean
   abstract toString(): string
 
-  asFragment(): Promise<DocumentFragment> {
+  async asFragment(): Promise<DocumentFragment> {
     return this.run({ mods: identity, process: identity });
   }
 
-  into(target: string | HTMLElement): Promise<DocumentFragment> {
+  async into(target: string | HTMLElement): Promise<DocumentFragment> {
     if (typeof target === "string") {
       let element = document.querySelector(target);
       if (element instanceof HTMLElement) {
@@ -229,11 +233,10 @@ abstract class API {
         return Promise.reject(new Error(`target not found: ${target}`));
       }
     }
-    return this.asFragment().then(function(fragment: DocumentFragment) {
-      target.innerHTML = "";
-      target.appendChild(fragment);
-      return Promise.resolve(fragment);
-    });
+    const fragment = await this.asFragment();
+    target.innerHTML = "";
+    target.appendChild(fragment);
+    return fragment;
   }
 }
 
@@ -257,15 +260,14 @@ class AndThen extends API {
   withProcess(process: (values: Values) => Values): API {
     return new AndThen(this.term, this.next.withProcess(process));
   }
-  run(state: State): Promise<DocumentFragment> {
+  async run(state: State): Promise<DocumentFragment> {
     switch (this.term.kind) {
       case "render":
         state.template = this.term.template;
         let self = this;
-        return fetchValues(this.term.template).then(function(values) {
-          if (values) state.values = values;
-          return self.next.run(state);
-        });
+        const values = await fetchValues(this.term.template);
+        if (values) state.values = values;
+        return self.next.run(state);
       case "withvalues":
         state.values = this.term.values;
         return this.next.run(state);
@@ -307,14 +309,13 @@ class Done extends API {
   withProcess(process: (values: Values) => Values): API {
     return new AndThen(this.term, new Done({ kind: "withprocess", process: process }));
   }
-  run(state: State): Promise<DocumentFragment> {
+  async run(state: State): Promise<DocumentFragment> {
     switch (this.term.kind) {
       case "render":
         state.template = this.term.template;
-        return fetchValues(state.template).then(function(values) {
-          if (values) state.values = values;
-          return runState(state);
-        });
+        const values = await fetchValues(state.template);
+        if (values) state.values = values;
+        return runState(state);
       case "withvalues":
         state.values = this.term.values;
         return runState(state);
@@ -322,9 +323,7 @@ class Done extends API {
         state.mods = this.term.mods;
         return runState(state);
       case "withprocess":
-        let current = state.process;
-        let process = this.term.process;
-        state.process = (values: Values) => process(current(values));
+        state.process = compose(this.term.process, state.process);
         return runState(state);
     }
   }
@@ -339,7 +338,7 @@ class Done extends API {
 /**
  * runState runs renderFragment with arguments sourced from State.
  */
-function runState(state: State): Promise<DocumentFragment> {
+async function runState(state: State): Promise<DocumentFragment> {
   if (!state.template) return Promise.reject(new Error("missing template"));
   if (!state.values) return Promise.reject(new Error("missing values"));
 
@@ -352,7 +351,7 @@ function runState(state: State): Promise<DocumentFragment> {
 /**
  * fetchValues fetches JSON from an element's `data-src` attribute, if present.
  */
-function fetchValues(element: HTMLElement): Promise<Values | undefined> {
+async function fetchValues(element: HTMLElement): Promise<Values | undefined> {
   let dataURL = element.getAttribute("data-src");
   if (!dataURL) {
     return Promise.resolve(undefined);
