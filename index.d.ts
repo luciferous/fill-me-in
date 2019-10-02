@@ -1,9 +1,10 @@
 /**
  * `Values` is the type of a plain old JavaScript object.
  */
-declare type Values = {
+interface Values {
     [key: string]: any;
-};
+}
+declare type Data = Values | Values[];
 /**
  * `Mod` describes how values modify target elements.
  *
@@ -43,15 +44,15 @@ declare type Mod = (this: Element, e: {
  * @param mods - How values modify the target element.
  * @returns Document fragment of the rendered template.
  */
-export declare function renderFragment(target: DocumentFragment, values: Values, mods?: Mod[]): DocumentFragment;
+export declare function renderFragment(target: DocumentFragment, values: Data, mods?: Mod[]): DocumentFragment;
 /**
  * State generated while processing API expression.
  */
 declare type State = {
     template?: HTMLTemplateElement;
-    values?: Values;
+    values?: Data;
     mods: (mods: Mod[]) => Mod[];
-    process: (values: Values) => Values;
+    process: (values: Data) => Data;
 };
 /**
  * API is series of API terms, that when run, produces a DocumentFragment.
@@ -59,10 +60,12 @@ declare type State = {
 declare abstract class API {
     abstract run(state: State): Promise<DocumentFragment>;
     abstract withMods(mods: (mods: Mod[]) => Mod[]): API;
-    abstract withValues(values: Values): API;
-    abstract withProcess(process: (values: Values) => Values): API;
+    abstract withValues(values: Data): API;
+    abstract withProcess<A>(process: (values: Data) => A): API;
     abstract equals(other: API): boolean;
     abstract toString(): string;
+    map(f: (values: Data) => Data): API;
+    filter(predicate: (a: any) => boolean): API;
     asFragment(): Promise<DocumentFragment>;
     into(target: string | HTMLElement): Promise<DocumentFragment>;
 }

@@ -7,7 +7,11 @@ type Template = string | HTMLTemplateElement | DocumentFragment;
 /**
  * `Values` is the type of a plain old JavaScript object.
  */
-type Values = { [key: string]: any };
+interface Values {
+  [key: string]: any
+};
+
+type Data = Values | Values[];
 
 /**
  * `Mod` describes how values modify target elements.
@@ -104,10 +108,10 @@ const defaultMods: Mod[] = [
  */
 export function renderFragment(
   target: DocumentFragment,
-  values: Values,
+  values: Data,
   mods: Mod[] = defaultMods
 ): DocumentFragment {
-  let refs: [Element, Values][] = [];
+  let refs: [Element, Data][] = [];
   for (let i = 0; i < target.children.length; i++) {
     refs.push([target.children[i], values]);
   }
@@ -115,7 +119,7 @@ export function renderFragment(
   return target;
 }
 
-function go(refs: [Element, Values][], mods: Mod[]): void {
+function go(refs: [Element, Data][], mods: Mod[]): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
 
@@ -133,7 +137,7 @@ function go(refs: [Element, Values][], mods: Mod[]): void {
 
     let value: any;
     let key = target.getAttribute("slot");
-    if (key) {
+    if (key && !Array.isArray(values)) {
       value = values[key];
     } else {
       value = values;
@@ -185,8 +189,8 @@ function go(refs: [Element, Values][], mods: Mod[]): void {
  */
 interface Render { kind: "render", template: HTMLTemplateElement }
 interface WithMods { kind: "withmods", mods: (mods: Mod[]) => Mod[] }
-interface WithValues { kind: "withvalues", values: Values }
-interface WithProcess { kind: "withprocess", process: (values: Values) => Values }
+interface WithValues { kind: "withvalues", values: Data }
+interface WithProcess { kind: "withprocess", process: (values: Data) => Data }
 
 type Term = Render | WithMods | WithValues | WithProcess
 
@@ -195,9 +199,9 @@ type Term = Render | WithMods | WithValues | WithProcess
  */
 type State = {
   template?: HTMLTemplateElement,
-  values?: Values,
+  values?: Data,
   mods: (mods: Mod[]) => Mod[],
-  process: (values: Values) => Values
+  process: (values: Data) => Data
 };
 
 function identity<T>(t: T): T {
@@ -215,10 +219,28 @@ abstract class API {
   abstract async run(state: State): Promise<DocumentFragment>
 
   abstract withMods(mods: (mods: Mod[]) => Mod[]): API
-  abstract withValues(values: Values): API
-  abstract withProcess(process: (values: Values) => Values): API
+  abstract withValues(values: Data): API
+  abstract withProcess<A>(process: (values: Data) => A): API
   abstract equals(other: API): boolean
   abstract toString(): string
+
+  map(f: (values: Data) => Data): API {
+    return this.withProcess(function(values: Data) {
+      if (!Array.isArray(values)) {
+        return f(values);
+      }
+      return values.map(f);
+    });
+  }
+
+  filter(predicate: (a: any) => boolean): API {
+    return this.withProcess(function(values: Data) {
+      if (!Array.isArray(values)) {
+        return values;
+      }
+      return values.filter(predicate);
+    });
+  }
 
   async asFragment(): Promise<DocumentFragment> {
     return this.run({ mods: identity, process: identity });
@@ -254,10 +276,10 @@ class AndThen extends API {
   withMods(mods: (mods: Mod[]) => Mod[]): API {
     return new AndThen(this.term, this.next.withMods(mods));
   }
-  withValues(values: Values): API {
+  withValues(values: Data): API {
     return new AndThen(this.term, this.next.withValues(values));
   }
-  withProcess(process: (values: Values) => Values): API {
+  withProcess(process: (values: Data) => Data): API {
     return new AndThen(this.term, this.next.withProcess(process));
   }
   async run(state: State): Promise<DocumentFragment> {
@@ -277,7 +299,7 @@ class AndThen extends API {
       case "withprocess":
         let current = state.process;
         let process = this.term.process;
-        state.process = (values: Values) => process(current(values));
+        state.process = (values: Data) => process(current(values));
         return this.next.run(state);
     }
   }
@@ -303,10 +325,10 @@ class Done extends API {
   withMods(mods: (mods: Mod[]) => Mod[]): API {
     return new AndThen(this.term, new Done({ kind: "withmods", mods: mods }));
   }
-  withValues(values: Values): API {
+  withValues(values: Data): API {
     return new AndThen(this.term, new Done({ kind: "withvalues", values: values }));
   }
-  withProcess(process: (values: Values) => Values): API {
+  withProcess(process: (values: Data) => Data): API {
     return new AndThen(this.term, new Done({ kind: "withprocess", process: process }));
   }
   async run(state: State): Promise<DocumentFragment> {
@@ -361,7 +383,7 @@ async function runState(state: State): Promise<DocumentFragment> {
 /**
  * fetchValues fetches JSON from an element's `data-src` attribute, if present.
  */
-async function fetchValues(element: HTMLElement): Promise<Values | undefined> {
+async function fetchValues(element: HTMLElement): Promise<Data | undefined> {
   let dataURL = element.getAttribute("data-src");
   if (!dataURL) {
     return Promise.resolve(undefined);

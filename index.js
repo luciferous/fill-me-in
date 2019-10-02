@@ -1,3 +1,4 @@
+;
 function newFunction(defn) {
     let ix0 = defn.indexOf("function(");
     if (ix0 == -1) {
@@ -101,7 +102,7 @@ function go(refs, mods) {
             continue;
         let value;
         let key = target.getAttribute("slot");
-        if (key) {
+        if (key && !Array.isArray(values)) {
             value = values[key];
         }
         else {
@@ -160,6 +161,22 @@ function compose(g, f) {
  * API is series of API terms, that when run, produces a DocumentFragment.
  */
 class API {
+    map(f) {
+        return this.withProcess(function (values) {
+            if (!Array.isArray(values)) {
+                return f(values);
+            }
+            return values.map(f);
+        });
+    }
+    filter(predicate) {
+        return this.withProcess(function (values) {
+            if (!Array.isArray(values)) {
+                return values;
+            }
+            return values.filter(predicate);
+        });
+    }
     async asFragment() {
         return this.run({ mods: identity, process: identity });
     }
