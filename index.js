@@ -177,6 +177,14 @@ class API {
             return values.filter(predicate);
         });
     }
+    reduce(f, z) {
+        return this.withProcess(function (values) {
+            if (!Array.isArray(values)) {
+                return values;
+            }
+            return values.reduce(f, z);
+        });
+    }
     async asFragment() {
         return this.run({ mods: identity, process: identity });
     }

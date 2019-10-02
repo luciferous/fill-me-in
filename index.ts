@@ -253,6 +253,15 @@ abstract class API {
     });
   }
 
+  reduce(f: (z: Data, value: Data) => Data, z: Data): API {
+    return this.withProcess(function(values: Data) {
+      if (!Array.isArray(values)) {
+        return values;
+      }
+      return values.reduce(f, z);
+    });
+  }
+
   async asFragment(): Promise<DocumentFragment> {
     return this.run({ mods: identity, process: identity });
   }

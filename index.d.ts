@@ -73,6 +73,7 @@ declare abstract class API {
     abstract toString(): string;
     map(f: (values: Data) => Data): API;
     filter(predicate: (a: any) => boolean): API;
+    reduce(f: (z: Data, value: Data) => Data, z: Data): API;
     asFragment(): Promise<DocumentFragment>;
     into(target: string | HTMLElement): Promise<DocumentFragment>;
 }
