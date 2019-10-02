@@ -1,19 +1,19 @@
 /**
- * Template is a reference to a template. It can be a selector string,
+ * `Template` is a reference to a template. It can be a selector string,
  * `<template>`, or a document fragment.
  */
 type Template = string | HTMLTemplateElement | DocumentFragment;
 
 /**
- * Values is the type of a plain old JavaScript object.
+ * `Values` is the type of a plain old JavaScript object.
  */
 type Values = { [key: string]: any };
 
 /**
- * Mod describes how values modify target elements.
+ * `Mod` describes how values modify target elements.
  *
- * @param this is the target element (identical to `e.target`)
- * @param e an object with `element` and `value`
+ * @param this - is the target element (identical to `e.target`)
+ * @param e - an object with `element` and `value`
  */
 type Mod = (this: Element, e: { target: Element, value: string | Values }) => boolean | void
 
@@ -82,23 +82,20 @@ const defaultMods: Mod[] = [
  * the DOM with the rendered document fragment. For example, running
  *
  * ```
- * renderFragment("#name" , { vicks: "wedge" });
+ * renderFragment(template, { vicks: "wedge" });
  * ```
  *
- * on the HTML document
+ * where template is the `HTMLTemplateElement`
  *
  * ```
- * <div><template id="name"><p slot="vicks"></p></template></div>
+ * <template id="name"><p slot="vicks"></p></template>
  * ```
  *
- * will modify it to
+ * returns the `DocumentFragment`
  *
  * ```
- * <div><p>wedge</p></div>
+ * <p>wedge</p>
  * ```
- *
- * . However, when passed a document fragment, nothing is automatically modified
- * (mainly because document fragments don't have parent elements).
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
@@ -369,13 +366,13 @@ function fetchValues(element: HTMLElement): Promise<Values | undefined> {
 }
 
 /**
- * render initializes an API expression.
+ * `render` initializes an API expression.
  *
  * ```
  * render("#template").withValues({ hello: "world" }).into("#content");
  * ```
  *
- * @param target a string representing the template, or the template itself.
+ * @param target - a string representing the template, or the template itself.
  */
 export function render(target: string | HTMLTemplateElement): API {
   if (typeof target === "string") {

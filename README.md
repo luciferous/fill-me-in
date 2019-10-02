@@ -64,16 +64,19 @@ Ready to try it out for yourself? Have a look at the demos in the next section.
 For simple websites, an HTML `<template>` and a `data-src` might be enough. But
 when you want more power and control, the Javascript API is the way to go.
 
-Everything starts with the `render`, which takes a single parameter we will
-call the *target*. The target can be a selector string of a template element,
-or the template element itself.
+Everything starts with `render`, which takes a single parameter we will call
+the *target*. The target can be a selector string of a template element, or the
+template element itself.
 
 ```javascript
 render("template").into("#content");
 ```
 
-`render` works by chaining actions together. `into` is an instruction to the
-renderer to replace the content of `#content` with the rendered output.
+`render` works by chaining actions together.
+
+### into
+
+`into` replaces the content of `#content` with the rendered output.
 
 ### withValues
 

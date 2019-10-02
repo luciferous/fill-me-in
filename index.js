@@ -56,23 +56,20 @@ const defaultMods = [
  * the DOM with the rendered document fragment. For example, running
  *
  * ```
- * renderFragment("#name" , { vicks: "wedge" });
+ * renderFragment(template, { vicks: "wedge" });
  * ```
  *
- * on the HTML document
+ * where template is the `HTMLTemplateElement`
  *
  * ```
- * <div><template id="name"><p slot="vicks"></p></template></div>
+ * <template id="name"><p slot="vicks"></p></template>
  * ```
  *
- * will modify it to
+ * returns the `DocumentFragment`
  *
  * ```
- * <div><p>wedge</p></div>
+ * <p>wedge</p>
  * ```
- *
- * . However, when passed a document fragment, nothing is automatically modified
- * (mainly because document fragments don't have parent elements).
  *
  * @param target - The template.
  * @param values - The values to insert into template slots.
@@ -304,13 +301,13 @@ function fetchValues(element) {
     });
 }
 /**
- * render initializes an API expression.
+ * `render` initializes an API expression.
  *
  * ```
  * render("#template").withValues({ hello: "world" }).into("#content");
  * ```
  *
- * @param target a string representing the template, or the template itself.
+ * @param target - a string representing the template, or the template itself.
  */
 export function render(target) {
     if (typeof target === "string") {
