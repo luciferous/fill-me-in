@@ -29,6 +29,57 @@ function normalize(node) {
   };
 }
 
+suite("Render");
+
+test("withValue: array", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue([
+        "apple",
+        "orange"
+      ]);
+  const state = await e.run();
+  assert.deepEqual(state.value, ["apple", "orange"]);
+});
+
+test("filter", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue([1, 2, 3])
+      .filter(n => n > 1);
+  const state = await e.run();
+  assert.deepEqual(state.value, [2, 3]);
+});
+
+test("reduce", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue([1, 2, 3])
+      .reduce((acc, n) => acc + n, 0);
+  const state = await e.run();
+  assert.equal(state.value, 1 + 2 + 3);
+});
+
+test("map", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue([1, 2, 3])
+      .map(n => n.length);
+  const state = await e.run();
+  assert.deepEqual(state.value, 3);
+});
+
+test("mapList", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue([1, 2, 3])
+      .mapList(n => n * 2);
+  const state = await e.run();
+  assert.deepEqual(state.value, [2, 4, 6]);
+});
+
+suite("renderFragment");
+
 test("object", () => {
   let got = renderFragment(
     mk(`
@@ -72,28 +123,6 @@ test("nested object", () => {
   assert(got.isEqualNode(want), diff(got, want));
 });
 
-test("bare array", async () => {
-  let div = document.createElement("div");
-  div.innerHTML = `
-<template><li slot></li></template
-`;
-  let got = await render(
-    div.querySelector("template")
-  ).withValues(
-    [
-      "apple",
-      "orange"
-    ]
-  ).asFragment();
-  let want = mk(`
-<li>apple</li>
-<li>orange</li>
-  `);
-  normalize(got);
-  normalize(want);
-  assert(got.isEqualNode(want), diff(got, want));
-});
-
 test("arrays", () => {
   let got = renderFragment(
     mk(`
@@ -113,6 +142,28 @@ test("arrays", () => {
   <li>apple</li>
   <li>orange</li>
 </ul>
+  `);
+  normalize(got);
+  normalize(want);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("bare array", async () => {
+  let div = document.createElement("div");
+  div.innerHTML = `
+<template><li slot></li></template
+`;
+  let got = await render(
+    div.querySelector("template")
+  ).withValue(
+    [
+      "apple",
+      "orange"
+    ]
+  ).asFragment();
+  let want = mk(`
+<li>apple</li>
+<li>orange</li>
   `);
   normalize(got);
   normalize(want);

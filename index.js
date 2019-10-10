@@ -151,189 +151,130 @@ function go(refs, mods) {
         }
     }
 }
-function identity(t) {
-    return t;
-}
-function compose(g, f) {
-    return a => g(f(a));
-}
 /**
- * API is series of API terms, that when run, produces a DocumentFragment.
+ * Render is a builder API for customizing the render.
+ *
+ * @remarks
+ *
+ * For example, this expression,
+ *
+ * ```
+ * render("#album-template")
+ *   .filter(album => album.rating >= 4.5)
+ *   .into("#content");
+ * ```
+ *
+ * When executed (via into), does the following:
+ *
+ * - Finds the DOM element by the ID album-template
+ * - Fetches JSON from the URL specified in its data-src attribute
+ * - Removes albums that have a rating lower than 4.5
+ * - Renders the remaining albums with the #album-template and inserts it into #content
  */
-class API {
-    map(f) {
-        return this.withProcess(function (values) {
-            if (!Array.isArray(values)) {
-                return f(values);
-            }
-            return values.map(f);
-        });
+class Render {
+    constructor(template, apply, mods) {
+        this.template = template;
+        this.apply = apply;
+        this.mods = mods;
     }
+    andThen(fn) {
+        return new Render(this.template, a => fn(this.apply(a)), this.mods);
+    }
+    /**
+     * Specify values statically, instead values fetched from `data-src`.
+     */
+    withValue(value) {
+        return this.andThen(state => Object.assign(state, { value: value }));
+    }
+    /**
+     * Map over content transforming it with `f`.
+     */
+    map(mapFn) {
+        return this.andThen(state => Object.assign(state, { value: mapFn(state.value) }));
+    }
+    /**
+     * Map over content transforming it with `f`.
+     */
+    mapList(mapFn) {
+        return this.andThen(state => Object.assign(state, { value: state.value.map(mapFn) }));
+    }
+    /**
+     * Fold over the content to transform it with `reduceFn`.
+     */
+    reduce(reduceFn, initial) {
+        return this.andThen(state => Object.assign(state, { value: state.value.reduce(reduceFn, initial) }));
+    }
+    /**
+     * Remove content, keeping only that which matches `predicate`.
+     */
     filter(predicate) {
-        return this.withProcess(function (values) {
-            if (!Array.isArray(values)) {
-                return values;
-            }
-            return values.filter(predicate);
-        });
+        return this.andThen(state => Object.assign(state, { value: state.value.filter(predicate) }));
     }
-    reduce(f, z) {
-        return this.withProcess(function (values) {
-            if (!Array.isArray(values)) {
-                return values;
-            }
-            return values.reduce(f, z);
-        });
-    }
+    /**
+     * Runs render with the built customizations.
+     */
     async asFragment() {
-        return this.run({ mods: identity, process: identity });
+        const state = await this.run();
+        const value = state.value;
+        const mods = state.mods;
+        if (Array.isArray(value)) {
+            let fragment = document.createDocumentFragment();
+            for (let i = 0; i < value.length; i++) {
+                let target = document.importNode(state.template.content, true);
+                fragment.appendChild(renderFragment(target, value[i], mods));
+            }
+            return fragment;
+        }
+        let target = document.importNode(state.template.content, true);
+        return renderFragment(target, value, mods);
     }
+    /**
+     * Runs asFragment and inserts the document fragment into the target,
+     * replacing its contents.
+     */
     async into(target) {
         if (typeof target === "string") {
             let element = document.querySelector(target);
             if (element instanceof HTMLElement) {
                 return this.into(element);
             }
-            else {
-                return Promise.reject(new Error(`target not found: ${target}`));
-            }
+            throw new Error(`target not found: ${target}`);
         }
         const fragment = await this.asFragment();
         target.innerHTML = "";
         target.appendChild(fragment);
         return fragment;
     }
-}
-/**
- * AndThen is combinator for sequencing API terms.
- */
-class AndThen extends API {
-    constructor(term, next) {
-        super();
-        this.term = term;
-        this.next = next;
-    }
-    withMods(mods) {
-        return new AndThen(this.term, this.next.withMods(mods));
-    }
-    withValues(values) {
-        return new AndThen(this.term, this.next.withValues(values));
-    }
-    withProcess(process) {
-        return new AndThen(this.term, this.next.withProcess(process));
-    }
-    async run(state) {
-        switch (this.term.kind) {
-            case "render":
-                state.template = this.term.template;
-                let self = this;
-                const values = await fetchValues(this.term.template);
-                if (values)
-                    state.values = values;
-                return self.next.run(state);
-            case "withvalues":
-                state.values = this.term.values;
-                return this.next.run(state);
-            case "withmods":
-                state.mods = compose(this.term.mods, state.mods);
-                return this.next.run(state);
-            case "withprocess":
-                state.process = compose(this.term.process, state.process);
-                return this.next.run(state);
+    /**
+     * Exposed for testing.
+     *
+     * @privateRemarks
+     *
+     * Runs the renderer, returning the resulting state.
+     */
+    async run() {
+        let url = this.template.getAttribute("data-src");
+        if (!url) {
+            return this.apply({
+                template: this.template,
+                value: undefined,
+                mods: this.mods
+            });
         }
-    }
-    equals(other) {
-        return other instanceof AndThen &&
-            other.term === this.term &&
-            this.next.equals(other.next);
-    }
-    toString() {
-        return `AndThen(${this.term.toString()}, ${this.next.toString()})`;
-    }
-}
-/**
- * Done is the last term in an API term sequence.
- */
-class Done extends API {
-    constructor(term) {
-        super();
-        this.term = term;
-    }
-    withMods(mods) {
-        return new AndThen(this.term, new Done({ kind: "withmods", mods: mods }));
-    }
-    withValues(values) {
-        return new AndThen(this.term, new Done({ kind: "withvalues", values: values }));
-    }
-    withProcess(process) {
-        return new AndThen(this.term, new Done({ kind: "withprocess", process: process }));
-    }
-    async run(state) {
-        switch (this.term.kind) {
-            case "render":
-                state.template = this.term.template;
-                const values = await fetchValues(state.template);
-                if (values)
-                    state.values = values;
-                return runState(state);
-            case "withvalues":
-                state.values = this.term.values;
-                return runState(state);
-            case "withmods":
-                state.mods = compose(this.term.mods, state.mods);
-                return runState(state);
-            case "withprocess":
-                state.process = compose(this.term.process, state.process);
-                return runState(state);
-        }
-    }
-    equals(other) {
-        return other instanceof Done && other.term === this.term;
-    }
-    toString() {
-        return `Done(${this.term.toString()})`;
+        const response = await fetch(url);
+        const json = await response.json();
+        return this.apply({
+            template: this.template,
+            value: json,
+            mods: this.mods
+        });
     }
 }
 /**
- * runState runs renderFragment with arguments sourced from State.
- */
-async function runState(state) {
-    if (!state.template)
-        return Promise.reject(new Error("missing template"));
-    if (!state.values)
-        return Promise.reject(new Error("missing values"));
-    let values = state.process(state.values);
-    let mods = state.mods(defaultMods);
-    if (Array.isArray(values)) {
-        let fragment = document.createDocumentFragment();
-        for (let i = 0; i < values.length; i++) {
-            let target = document.importNode(state.template.content, true);
-            fragment.appendChild(renderFragment(target, values[i], mods));
-        }
-        return fragment;
-    }
-    let target = document.importNode(state.template.content, true);
-    return renderFragment(target, values, mods);
-}
-/**
- * fetchValues fetches JSON from an element's `data-src` attribute, if present.
- */
-async function fetchValues(element) {
-    let dataURL = element.getAttribute("data-src");
-    if (!dataURL) {
-        return Promise.resolve(undefined);
-    }
-    const response = await fetch(dataURL);
-    return response.json();
-}
-/**
- * `render` initializes an API expression.
- *
- * ```
- * render("#template").withValues({ hello: "world" }).into("#content");
- * ```
+ * Initialize the Render API with a selector string or HTMLTemplateElement.
  *
  * @param target - a string representing the template, or the template itself.
+ * @returns The initialized renderer.
  */
 export function render(target) {
     if (typeof target === "string") {
@@ -341,11 +282,9 @@ export function render(target) {
         if (template instanceof HTMLTemplateElement) {
             return render(template);
         }
-        else {
-            throw new Error(`template not found: ${target}`);
-        }
+        throw new Error(`template not found: ${target}`);
     }
-    return new Done({ kind: "render", template: target });
+    return new Render(target, state => state, defaultMods);
 }
 // Automatically do things.
 document.querySelectorAll("template[data-embed]").forEach(async function (template) {

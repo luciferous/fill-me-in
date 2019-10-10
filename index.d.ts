@@ -53,38 +53,86 @@ declare type Mod = (this: Element, e: ModEvent) => boolean | void;
  */
 export declare function renderFragment(target: DocumentFragment, values: Data, mods?: Mod[]): DocumentFragment;
 /**
- * State generated while processing API expression.
+ * The type of the inputs to the renderer.
  */
-declare type State = {
-    template?: HTMLTemplateElement;
-    values?: Data;
-    mods: (mods: Mod[]) => Mod[];
-    process: (values: Data) => Data;
+declare type State<T> = {
+    template: HTMLTemplateElement;
+    value: T;
+    mods: Mod[];
 };
 /**
- * API is series of API terms, that when run, produces a DocumentFragment.
+ * The type of functions from `State<A>` to `State<B>`.
  */
-declare abstract class API {
-    abstract run(state: State): Promise<DocumentFragment>;
-    abstract withMods(mods: (mods: Mod[]) => Mod[]): API;
-    abstract withValues(values: Data): API;
-    abstract withProcess<A>(process: (values: Data) => A): API;
-    abstract equals(other: API): boolean;
-    abstract toString(): string;
-    map(f: (values: Data) => Data): API;
-    filter(predicate: (a: any) => boolean): API;
-    reduce(f: (z: Data, value: Data) => Data, z: Data): API;
+declare type Apply<A, B> = (state: State<A>) => State<B>;
+/**
+ * Render is a builder API for customizing the render.
+ *
+ * @remarks
+ *
+ * For example, this expression,
+ *
+ * ```
+ * render("#album-template")
+ *   .filter(album => album.rating >= 4.5)
+ *   .into("#content");
+ * ```
+ *
+ * When executed (via into), does the following:
+ *
+ * - Finds the DOM element by the ID album-template
+ * - Fetches JSON from the URL specified in its data-src attribute
+ * - Removes albums that have a rating lower than 4.5
+ * - Renders the remaining albums with the #album-template and inserts it into #content
+ */
+declare class Render<A> {
+    private template;
+    private apply;
+    private mods;
+    constructor(template: HTMLTemplateElement, apply: Apply<any, A>, mods: Mod[]);
+    private andThen;
+    /**
+     * Specify values statically, instead values fetched from `data-src`.
+     */
+    withValue<B>(value: B): Render<B>;
+    /**
+     * Map over content transforming it with `f`.
+     */
+    map<B>(mapFn: (a: A) => B): Render<B>;
+    /**
+     * Map over content transforming it with `f`.
+     */
+    mapList<AA extends A[], A, B>(this: Render<AA>, mapFn: (a: A) => B): Render<B[]>;
+    /**
+     * Fold over the content to transform it with `reduceFn`.
+     */
+    reduce<AA extends A[], A, B>(this: Render<AA>, reduceFn: (accumulator: B, value: A) => B, initial: B): Render<B>;
+    /**
+     * Remove content, keeping only that which matches `predicate`.
+     */
+    filter<AA extends A[], A>(this: Render<AA>, predicate: (value: A) => boolean): Render<A[]>;
+    /**
+     * Runs render with the built customizations.
+     */
     asFragment(): Promise<DocumentFragment>;
+    /**
+     * Runs asFragment and inserts the document fragment into the target,
+     * replacing its contents.
+     */
     into(target: string | HTMLElement): Promise<DocumentFragment>;
+    /**
+     * Exposed for testing.
+     *
+     * @privateRemarks
+     *
+     * Runs the renderer, returning the resulting state.
+     */
+    run(): Promise<State<A>>;
 }
 /**
- * `render` initializes an API expression.
- *
- * ```
- * render("#template").withValues({ hello: "world" }).into("#content");
- * ```
+ * Initialize the Render API with a selector string or HTMLTemplateElement.
  *
  * @param target - a string representing the template, or the template itself.
+ * @returns The initialized renderer.
  */
-export declare function render(target: string | HTMLTemplateElement): API;
+export declare function render(target: string | HTMLTemplateElement): Render<any>;
 export {};
