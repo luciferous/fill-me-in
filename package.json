@@ -15,7 +15,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^6.2.1",
-    "typescript": "^3.6.3"
+    "typescript": "^3.7.0-beta"
   },
   "dependencies": {}
 }
