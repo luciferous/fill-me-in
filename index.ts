@@ -1,10 +1,4 @@
 /**
- * `Template` is a reference to a template. It can be a selector string,
- * `<template>`, or a document fragment.
- */
-type Template = string | HTMLTemplateElement | DocumentFragment;
-
-/**
  * `KVPairs` is the type of a plain old JavaScript object.
  */
 interface KVPairs {
@@ -210,7 +204,7 @@ type Apply<A, B> = (state: State<A>) => State<B>
  * Render is a builder API for customizing the render.
  *
  * @remarks
- * 
+ *
  * For example, this expression,
  *
  * ```
