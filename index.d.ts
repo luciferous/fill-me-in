@@ -1,19 +1,9 @@
 /**
- * `Values` is the type of a plain old JavaScript object.
- */
-interface Values {
-    [key: string]: any;
-}
-/**
- * `Data` is the type of renderable values;
- */
-declare type Data = Values | Values[];
-/**
  * `ModEvent` wraps the target element and the incoming value.
  */
 interface ModEvent {
     target: Element;
-    value: string | Values;
+    value: any;
 }
 /**
  * `Mod` describes how values modify target elements.
@@ -23,7 +13,7 @@ interface ModEvent {
  */
 declare type Mod = (this: Element, e: ModEvent) => boolean | void;
 /**
- * Creates a document fragment from the given template and values.
+ * Creates a document fragment from the given template and a value.
  *
  * @remarks
  *
@@ -47,11 +37,11 @@ declare type Mod = (this: Element, e: ModEvent) => boolean | void;
  * ```
  *
  * @param target - The template.
- * @param values - The values to insert into template slots.
- * @param mods - How values modify the target element.
+ * @param value - The value to insert into template slots.
+ * @param mods - How the value modifies the target element.
  * @returns Document fragment of the rendered template.
  */
-export declare function renderFragment(target: DocumentFragment, values: Data, mods?: Mod[]): DocumentFragment;
+export declare function renderFragment<T>(target: DocumentFragment, value: T, mods?: Mod[]): DocumentFragment;
 /**
  * The type of the inputs to the renderer.
  */

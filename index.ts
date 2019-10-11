@@ -5,23 +5,18 @@
 type Template = string | HTMLTemplateElement | DocumentFragment;
 
 /**
- * `Values` is the type of a plain old JavaScript object.
+ * `KVPairs` is the type of a plain old JavaScript object.
  */
-interface Values {
+interface KVPairs {
   [key: string]: any
-};
-
-/**
- * `Data` is the type of renderable values;
- */
-type Data = Values | Values[];
+}
 
 /**
  * `ModEvent` wraps the target element and the incoming value.
  */
 interface ModEvent {
   target: Element
-  value: string | Values
+  value: any
 }
 
 /**
@@ -89,7 +84,7 @@ const defaultMods: Mod[] = [
 ];
 
 /**
- * Creates a document fragment from the given template and values.
+ * Creates a document fragment from the given template and a value.
  *
  * @remarks
  *
@@ -113,24 +108,24 @@ const defaultMods: Mod[] = [
  * ```
  *
  * @param target - The template.
- * @param values - The values to insert into template slots.
- * @param mods - How values modify the target element.
+ * @param value - The value to insert into template slots.
+ * @param mods - How the value modifies the target element.
  * @returns Document fragment of the rendered template.
  */
-export function renderFragment(
+export function renderFragment<T>(
   target: DocumentFragment,
-  values: Data,
+  value: T,
   mods: Mod[] = defaultMods
 ): DocumentFragment {
-  let refs: [Element, Data][] = [];
+  let refs: [Element, T][] = [];
   for (let i = 0; i < target.children.length; i++) {
-    refs.push([target.children[i], values]);
+    refs.push([target.children[i], value]);
   }
   go(refs, mods);
   return target;
 }
 
-function go(refs: [Element, Data][], mods: Mod[]): void {
+function go<T>(refs: [Element, T][], mods: Mod[]): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
 
@@ -148,8 +143,8 @@ function go(refs: [Element, Data][], mods: Mod[]): void {
 
     let value: any;
     let key = target.getAttribute("slot");
-    if (key && !Array.isArray(values)) {
-      value = values[key];
+    if (key && !Array.isArray(values) && typeof values === "object") {
+      value = (values as KVPairs)[key];
     } else {
       value = values;
     }

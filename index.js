@@ -1,4 +1,3 @@
-;
 function newFunction(defn) {
     let ix0 = defn.indexOf("function(");
     if (ix0 == -1) {
@@ -49,7 +48,7 @@ const defaultMods = [
     textContent
 ];
 /**
- * Creates a document fragment from the given template and values.
+ * Creates a document fragment from the given template and a value.
  *
  * @remarks
  *
@@ -73,14 +72,14 @@ const defaultMods = [
  * ```
  *
  * @param target - The template.
- * @param values - The values to insert into template slots.
- * @param mods - How values modify the target element.
+ * @param value - The value to insert into template slots.
+ * @param mods - How the value modifies the target element.
  * @returns Document fragment of the rendered template.
  */
-export function renderFragment(target, values, mods = defaultMods) {
+export function renderFragment(target, value, mods = defaultMods) {
     let refs = [];
     for (let i = 0; i < target.children.length; i++) {
-        refs.push([target.children[i], values]);
+        refs.push([target.children[i], value]);
     }
     go(refs, mods);
     return target;
@@ -102,7 +101,7 @@ function go(refs, mods) {
             continue;
         let value;
         let key = target.getAttribute("slot");
-        if (key && !Array.isArray(values)) {
+        if (key && !Array.isArray(values) && typeof values === "object") {
             value = values[key];
         }
         else {
