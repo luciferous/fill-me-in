@@ -1,11 +1,4 @@
 /**
- * `KVPairs` is the type of a plain old JavaScript object.
- */
-interface KVPairs {
-  [key: string]: any
-}
-
-/**
  * `ModEvent` wraps the target element and the incoming value.
  */
 interface ModEvent {
@@ -138,7 +131,7 @@ function go<T>(refs: [Element, T][], mods: Mod[]): void {
     let value: any;
     let key = target.getAttribute("slot");
     if (key && !Array.isArray(values) && typeof values === "object") {
-      value = (values as KVPairs)[key];
+      value = (values as any)[key];
     } else {
       value = values;
     }
