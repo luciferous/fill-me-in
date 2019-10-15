@@ -2,9 +2,10 @@
 
 import { render, renderFragment } from "./index.js";
 
-function mk(html) {
+function mk(html, skipFragment) {
   let template = document.createElement("template");
   template.innerHTML = html.trim();
+  if (skipFragment) return template;
   return document.importNode(template.content, true);
 }
 
@@ -42,6 +43,14 @@ test("withValue: array", async () => {
   assert.deepEqual(state.value, ["apple", "orange"]);
 });
 
+test("withValue: object", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue({ fruit: ["apple", "orange"] });
+  const state = await e.run();
+  assert.deepEqual(state.value, { fruit: ["apple", "orange"] });
+});
+
 test("filter", async () => {
   let e =
     render(document.createElement("template"))
@@ -76,6 +85,42 @@ test("mapList", async () => {
       .mapList(n => n * 2);
   const state = await e.run();
   assert.deepEqual(state.value, [2, 4, 6]);
+});
+
+test("into: object", async () => {
+  let got = await render(
+    mk(`
+<div slot="greeting"></div>
+    `, /* skipFragment */ true)
+  ).withValue(
+    {
+      greeting: "hello"
+    }
+  ).asFragment();
+  let want = mk(`
+<div>hello</div>
+  `);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("into: array", async () => {
+  let got = await render(
+    mk(`
+<li slot></li>
+    `, /* skipFragment */ true)
+  ).withValue(
+    [
+      "apple",
+      "orange"
+    ]
+  ).asFragment();
+  let want = mk(`
+<li>apple</li>
+<li>orange</li>
+  `);
+  normalize(got);
+  normalize(want);
+  assert(got.isEqualNode(want), diff(got, want));
 });
 
 suite("renderFragment");
@@ -149,12 +194,11 @@ test("arrays", () => {
 });
 
 test("bare array", async () => {
-  let div = document.createElement("div");
-  div.innerHTML = `
-<template><li slot></li></template
-`;
+  ;
   let got = await render(
-    div.querySelector("template")
+    mk(`
+<li slot></li>
+    `, /* skipFragment */ true)
   ).withValue(
     [
       "apple",

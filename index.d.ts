@@ -46,7 +46,6 @@ export declare function renderFragment<T>(target: DocumentFragment, value: T, mo
  * The type of the inputs to the renderer.
  */
 declare type State<T> = {
-    template: HTMLTemplateElement;
     value: T;
     mods: Mod[];
 };

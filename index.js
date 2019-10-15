@@ -219,12 +219,12 @@ class Render {
         if (Array.isArray(value)) {
             let fragment = document.createDocumentFragment();
             for (let i = 0; i < value.length; i++) {
-                let target = document.importNode(state.template.content, true);
+                let target = document.importNode(this.template.content, true);
                 fragment.appendChild(renderFragment(target, value[i], mods));
             }
             return fragment;
         }
-        let target = document.importNode(state.template.content, true);
+        let target = document.importNode(this.template.content, true);
         return renderFragment(target, value, mods);
     }
     /**
@@ -255,7 +255,6 @@ class Render {
         let url = this.template.getAttribute("data-src");
         if (!url) {
             return this.apply({
-                template: this.template,
                 value: undefined,
                 mods: this.mods
             });
@@ -263,7 +262,6 @@ class Render {
         const response = await fetch(url);
         const json = await response.json();
         return this.apply({
-            template: this.template,
             value: json,
             mods: this.mods
         });
