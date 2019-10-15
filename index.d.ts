@@ -116,6 +116,41 @@ declare class Render<A> {
      * Runs the renderer, returning the resulting state.
      */
     run(): Promise<State<A>>;
+    /**
+     * Runs the renderer and creates a save point for its state.
+     *
+     * @remarks
+     *
+     * Consider this example, where albums are processed through an expensive
+     * operation, which is then filtered by album rating, a comparatively cheap
+     * operation.
+     *
+     * ```
+     * render("#album-template")
+     *   .mapList(expensiveOperation)
+     *   .filter(album => album.rating >= minimumRating)
+     *   .into("#content");
+     * ```
+     *
+     * Every time `minimumRating` changes, we want to refresh the albums
+     * displayed, but this means running the expensive operation too.
+     *
+     * What we want is to run the expensive operation just once, and for each
+     * `minimumRating` change, just update the filter.
+     *
+     * ```
+     * let albums = render("#album-template")
+     *   .mapList(expensiveOperation)
+     *   .cache();
+     *
+     * // Then, on minimumRating changes...
+     *
+     * albums.
+     *   .filter(album => album.rating >= minimumRating)
+     *   .into("#content");
+     * ```
+     */
+    cache(): Promise<Render<A>>;
 }
 /**
  * Initialize the Render API with a selector string or HTMLTemplateElement.

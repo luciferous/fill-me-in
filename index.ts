@@ -325,6 +325,13 @@ class Render<A> {
    * Runs the renderer, returning the resulting state.
    */
   async run(): Promise<State<A>> {
+    if ((this.apply as any).fromCache) {
+      return this.apply({
+        value: undefined,
+        mods: this.mods
+      });
+    }
+
     let url = this.template.getAttribute("data-src");
     if (!url) {
       return this.apply({
@@ -339,6 +346,47 @@ class Render<A> {
       value: json,
       mods: this.mods
     });
+  }
+
+  /**
+   * Runs the renderer and creates a save point for its state.
+   *
+   * @remarks
+   *
+   * Consider this example, where albums are processed through an expensive
+   * operation, which is then filtered by album rating, a comparatively cheap
+   * operation.
+   *
+   * ```
+   * render("#album-template")
+   *   .mapList(expensiveOperation)
+   *   .filter(album => album.rating >= minimumRating)
+   *   .into("#content");
+   * ```
+   *
+   * Every time `minimumRating` changes, we want to refresh the albums
+   * displayed, but this means running the expensive operation too.
+   *
+   * What we want is to run the expensive operation just once, and for each
+   * `minimumRating` change, just update the filter.
+   *
+   * ```
+   * let albums = render("#album-template")
+   *   .mapList(expensiveOperation)
+   *   .cache();
+   *
+   * // Then, on minimumRating changes...
+   *
+   * albums.
+   *   .filter(album => album.rating >= minimumRating)
+   *   .into("#content");
+   * ```
+   */
+  async cache(): Promise<Render<A>> {
+    const state = await this.run();
+    let k = (_: any) => state;
+    (k as any).fromCache = true;
+    return new Render(this.template, k, state.mods);
   }
 }
 

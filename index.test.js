@@ -87,6 +87,24 @@ test("mapList", async () => {
   assert.deepEqual(state.value, [2, 4, 6]);
 });
 
+test("cache", async () => {
+  let worksOnce = function(n) {
+    if (worksOnce.fail) throw new Error("boo");
+    worksOnce.fail = true;
+    return n * 2;
+  };
+
+  let e =
+    await render(document.createElement("template"))
+      .withValue(1)
+      .map(worksOnce)
+      .cache();
+
+  const state = await e.run();
+  assert.deepEqual(state.value, 2);
+  await e.run();
+});
+
 test("into: object", async () => {
   let got = await render(
     mk(`
