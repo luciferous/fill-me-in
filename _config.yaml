@@ -3,6 +3,10 @@ plugins:
 
 logo: logo.png
 
+twitter:
+  username: neuman
+  card: summary
+
 defaults:
   - scope:
       path: ""
