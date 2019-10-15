@@ -12,6 +12,7 @@ interface ModEvent {
  * @param e - an object with `element` and `value`
  */
 declare type Mod = (this: Element, e: ModEvent) => boolean | void;
+declare type Logger = (message: string, value: any, ...args: any[]) => void;
 /**
  * Creates a document fragment from the given template and a value.
  *
@@ -41,7 +42,7 @@ declare type Mod = (this: Element, e: ModEvent) => boolean | void;
  * @param mods - How the value modifies the target element.
  * @returns Document fragment of the rendered template.
  */
-export declare function renderFragment<T>(target: DocumentFragment, value: T, mods?: Mod[]): DocumentFragment;
+export declare function renderFragment<T>(target: DocumentFragment, value: T, mods?: Mod[], logger?: Logger): DocumentFragment;
 /**
  * The type of the inputs to the renderer.
  */

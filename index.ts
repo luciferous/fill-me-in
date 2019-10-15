@@ -70,6 +70,22 @@ const defaultMods: Mod[] = [
   textContent
 ];
 
+type Logger = (message: string, value: any, ...args: any[]) => void
+
+function nullLogger(message: string, value: any): void {}
+
+function consoleLogger(message: string, value: any): void {
+  console.log(message, value);
+}
+
+function elementLogger(e: Element): Logger {
+  return (message: string, value: any, ...args: any[]) => {
+    let pre = document.createElement("pre");
+    pre.textContent = `${message} ${JSON.stringify(value, ...args)}`;
+    e.appendChild(pre);
+  }
+}
+
 /**
  * Creates a document fragment from the given template and a value.
  *
@@ -102,17 +118,18 @@ const defaultMods: Mod[] = [
 export function renderFragment<T>(
   target: DocumentFragment,
   value: T,
-  mods: Mod[] = defaultMods
+  mods: Mod[] = defaultMods,
+  logger: Logger = nullLogger
 ): DocumentFragment {
   let refs: [Element, T][] = [];
   for (let i = 0; i < target.children.length; i++) {
     refs.push([target.children[i], value]);
   }
-  go(refs, mods);
+  go(refs, mods, logger);
   return target;
 }
 
-function go<T>(refs: [Element, T][], mods: Mod[]): void {
+function go<T>(refs: [Element, T][], mods: Mod[], logger: Logger): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
 
@@ -130,6 +147,12 @@ function go<T>(refs: [Element, T][], mods: Mod[]): void {
 
     let value: any;
     let key = target.getAttribute("slot");
+    if (key && target.hasAttribute("print")) {
+      logger(key + ":", values);
+    } else if (key && target.hasAttribute("pprint")) {
+      logger(key + ":", values, null, " ");
+    }
+
     if (key && !Array.isArray(values) && typeof values === "object") {
       value = (values as any)[key];
     } else {
@@ -285,17 +308,27 @@ class Render<A> {
     const value = state.value;
     const mods = state.mods;
 
+    let logger = nullLogger;
+    if (this.template.hasAttribute("debug")) {
+      logger = consoleLogger;
+      let arg = this.template.getAttribute("debug");
+      if (arg) {
+        let element = document.querySelector(arg);
+        if (element) logger = elementLogger(element);
+      }
+    }
+
     if (Array.isArray(value)) {
       let fragment = document.createDocumentFragment();
       for (let i = 0; i < value.length; i++) {
         let target = document.importNode(this.template.content, true);
-        fragment.appendChild(renderFragment(target, value[i], mods));
+        fragment.appendChild(renderFragment(target, value[i], mods, logger));
       }
       return fragment;
     }
 
     let target = document.importNode(this.template.content, true);
-    return renderFragment(target, value, mods);
+    return renderFragment(target, value, mods, logger);
   }
 
   /**
@@ -412,5 +445,5 @@ document.querySelectorAll("template[data-embed]").forEach(async function(templat
   if (!(template instanceof HTMLTemplateElement)) return;
   if (!template.parentElement) return;
   const fragment = await render(template).asFragment();
-  template.parentElement.appendChild(fragment);
+  template.parentElement.insertBefore(fragment, template);
 });
