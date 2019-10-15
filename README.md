@@ -1,7 +1,8 @@
 ![](logo_transparent.png)
 
 ******
-*A prototyping library for JSON-driven web pages.
+
+*A prototyping library for JSON-driven web pages.*
 
 ## A quick example
 
