@@ -357,7 +357,7 @@ export function render(target) {
     return new Render(target, state => state, defaultMods);
 }
 // Automatically do things.
-document.querySelectorAll("template[data-embed]").forEach(async function (template) {
+document.querySelectorAll("template[embed]").forEach(async function (template) {
     if (!(template instanceof HTMLTemplateElement))
         return;
     if (!template.parentElement)

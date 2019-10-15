@@ -441,7 +441,7 @@ export function render(target: string | HTMLTemplateElement): Render<any> {
 }
 
 // Automatically do things.
-document.querySelectorAll("template[data-embed]").forEach(async function(template) {
+document.querySelectorAll("template[embed]").forEach(async function(template) {
   if (!(template instanceof HTMLTemplateElement)) return;
   if (!template.parentElement) return;
   const fragment = await render(template).asFragment();

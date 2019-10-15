@@ -26,7 +26,7 @@ tag, so let's use that.
 
 ```html
 <h1>My favorite things</h1>
-<template data-src="/favorites.json" data-embed>
+<template data-src="/favorites.json" embed>
   <ul slot="things">
     <template>
       <li slot></li>
@@ -37,7 +37,7 @@ tag, so let's use that.
 ```
 
 The `data-src` attribute specifies the data source for this template. The
-`data-embed` attribute tells the library to render the template automatically.
+`embed` attribute tells the library to render the template automatically.
 
 So, the HTML above produces
 
