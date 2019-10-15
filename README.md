@@ -9,15 +9,13 @@ Let's say you keep a list of things you like in a file called `favorites.json`.
 It looks like this.
 
 ```json
-{
-  "things": [
-    "Raindrops on roses",
-    "Whiskers on kittens",
-    "Bright copper kettles",
-    "Warm woolen mittens",
-    "Brown paper packages tied up with strings"
-  ]
-}
+[
+  "Raindrops on roses",
+  "Whiskers on kittens",
+  "Bright copper kettles",
+  "Warm woolen mittens",
+  "Brown paper packages tied up with strings"
+]
 ```
 
 And, you want to display this list on a website. HTML has a
@@ -26,18 +24,16 @@ tag, so let's use that.
 
 ```html
 <h1>My favorite things</h1>
+<ul>
 <template data-src="/favorites.json" embed>
-  <ul slot="things">
-    <template>
-      <li slot></li>
-    </template>
-  </ul>
+  <li slot></li>
 </template>
+</ul>
 <script type="module" src="https://unpkg.com/fill-me-in"></script>
 ```
 
 The `data-src` attribute specifies the data source for this template. The
-`embed` attribute tells the library to render the template automatically.
+`embed` attribute tells the library to render the template in place.
 
 So, the HTML above produces
 
@@ -59,52 +55,52 @@ Ready to try it out for yourself? Have a look at the demos in the next section.
 
 - [Tests](https://lcfrs.org/fill-me-in/tests.html)
 
-## API
+## The Render API
 
-For simple websites, an HTML `<template>` and a `data-src` might be enough. But
-when you want more power and control, the Javascript API is the way to go.
+The class `Render` is a builder API for customizing the render operation.
 
-Everything starts with `render`, which takes a single parameter we will call
-the *target*. The target can be a selector string of a template element, or the
-template element itself.
+For example, this expression,
 
-```javascript
-render("template").into("#content");
+```
+render("#album-template")
+  .filter(album => album.rating >= 4.5)
+  .into("#content");
 ```
 
-`render` works by chaining actions together.
+When executed (via `into`), does the following:
 
-### into
+- Finds the DOM element by the ID album-template
+- Fetches JSON from the URL specified in its data-src attribute
+- Removes albums that have a rating lower than 4.5
+- Renders the remaining albums with the #album-template and inserts it into #content
 
-`into` replaces the content of `#content` with the rendered output.
+### `render(template: string | HTMLTemplateElement): Render<any>`
 
-### withValues
+Initialize the Render API with a selector string or `HTMLTemplateElement`.
 
-`withValues` allows you to specify the data source as a Javascript object,
-overriding `data-src`.
+### `.map<U>(f: T => U): Render<U>`
 
-```javascript
-render("template").withValues({
-  things: [
-    "Raindrops on roses",
-    "Whiskers on kittens",
-    "Bright copper kettles",
-    "Warm woolen mittens",
-    "Brown paper packages tied up with strings"
-  ]
-}).into("#content");
-```
+Map over content transforming it with f.
 
-### withProcess
+### `.reduce<U>(f: (current: U, next: T) => U, initial: U): Render<U>`
 
-`withProcess` transforms the data from the data source.
+Fold over the content to transform it into something else.
 
-```javascript
-render("template").withProcess(function(values) {
-  values.things.push("HTML templates");
-  return values;
-}).into("#content");
-```
+### `.filter(predicate: (values: T) => boolean): Render<T>`
+
+Remove content, keeping only that which matches the predicate.
+
+### `.withValues<T>(values: T): Render<T>`
+
+Specify values statically, instead of from `data-src`.
+
+### `.asFragment(): Promise<DocumentFragment>`
+
+Runs the render process with the customizations.
+
+### `.into(target: string | HTMLElement): Promise<DocumentFragment>`
+
+Runs `asFragment` and inserts the document fragment into the target, replacing its contents.
 
 ## Common scenarios
 
