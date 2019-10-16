@@ -75,33 +75,41 @@ When executed (via `into`), does the following:
 - Removes albums that have a rating lower than 4.5
 - Renders the remaining albums with the #album-template and inserts it into #content
 
-### `render(template: string | HTMLTemplateElement): Render<any>`
+#### `render(template: string | HTMLTemplateElement): Render<any>`
 
 Initialize the Render API with a selector string or `HTMLTemplateElement`.
 
-### `.map<U>(f: T => U): Render<U>`
+#### `.map<U>(f: T => U): Render<U>`
 
-Map over content transforming it with f.
+Map over content, transforming it with f.
 
-### `.reduce<U>(f: (current: U, next: T) => U, initial: U): Render<U>`
+#### `.mapList<U, V>(this: Render<U[]>, f: (u: U) => V): Render<V[]>`
+
+Map over a list, transforming each item into something else.
+
+#### `.reduce<U, V>(this: Render<U[]>, f: (accumulator: V, next: U) => V, initial: V): Render<V[]>`
 
 Fold over the content to transform it into something else.
 
-### `.filter(predicate: (values: T) => boolean): Render<T>`
+#### `.filter<U>(this: Render<U[]>, predicate: (value: U) => boolean): Render<U[]>`
 
 Remove content, keeping only that which matches the predicate.
 
-### `.withValues<T>(values: T): Render<T>`
+#### `.withValue<T>(value: T): Render<T>`
 
 Specify values statically, instead of from `data-src`.
 
-### `.asFragment(): Promise<DocumentFragment>`
+#### `.asFragment(): Promise<DocumentFragment>`
 
 Runs the render process with the customizations.
 
-### `.into(target: string | HTMLElement): Promise<DocumentFragment>`
+#### `.into(target: string | HTMLElement): Promise<DocumentFragment>`
 
 Runs `asFragment` and inserts the document fragment into the target, replacing its contents.
+
+#### `.cache(): Promise<Render<A>>`
+
+Runs the renderer, and creates a save point for its state.
 
 ## Common scenarios
 
