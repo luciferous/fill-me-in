@@ -79,7 +79,7 @@ declare class Render<A> {
     private apply;
     private mods;
     private value?;
-    constructor(template: HTMLTemplateElement, apply: Apply<any, A>, mods: Mod[], value?: A);
+    constructor(template: HTMLTemplateElement, apply: Apply<any, A>, mods: Mod[], value?: any);
     private andThen;
     /**
      * Specify values statically, instead values fetched from `data-src`.

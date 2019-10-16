@@ -265,13 +265,13 @@ class Render<A> {
   private template: HTMLTemplateElement
   private apply: Apply<any, A>
   private mods: Mod[]
-  private value?: A
+  private value?: any
 
   constructor(
     template: HTMLTemplateElement,
     apply: Apply<any, A>,
     mods: Mod[],
-    value?: A
+    value?: any
   ) {
     this.template = template;
     this.apply = apply;
@@ -280,7 +280,7 @@ class Render<A> {
   }
 
   private andThen<B>(fn: Apply<A, B>): Render<B> {
-    return new Render(this.template, a => fn(this.apply(a)), this.mods);
+    return new Render(this.template, a => fn(this.apply(a)), this.mods, this.value);
   }
 
   /**

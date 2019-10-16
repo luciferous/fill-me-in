@@ -223,7 +223,7 @@ class Render {
         this.value = value;
     }
     andThen(fn) {
-        return new Render(this.template, a => fn(this.apply(a)), this.mods);
+        return new Render(this.template, a => fn(this.apply(a)), this.mods, this.value);
     }
     /**
      * Specify values statically, instead values fetched from `data-src`.

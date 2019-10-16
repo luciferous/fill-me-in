@@ -126,8 +126,8 @@ test("cache", async () => {
       .map(worksOnce)
       .cache();
 
-  const state = await e.run();
-  assert.deepEqual(state.value, 2);
+  const state = await e.map(n => n + 3).run();
+  assert.equal(state.value, 5);
   await e.run();
 });
 
