@@ -1,7 +1,7 @@
 {
   "name": "fill-me-in",
-  "version": "1.0.6",
-  "description": "Structured templating for HTML",
+  "version": "1.0.7",
+  "description": "Prototyping library for JSON-driven web pages",
   "main": "index.js",
   "type": "module",
   "scripts": {
