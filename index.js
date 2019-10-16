@@ -47,8 +47,8 @@ const defaultMods = [
     imageSource,
     textContent
 ];
-function nullLogger(message, value) { }
-function consoleLogger(message, value) {
+function nullLogger(message, value, ...args) { }
+function consoleLogger(message, value, ...args) {
     console.log(message, value);
 }
 function elementLogger(e) {

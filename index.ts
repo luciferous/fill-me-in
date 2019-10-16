@@ -72,9 +72,9 @@ const defaultMods: Mod[] = [
 
 type Logger = (message: string, value?: any, ...args: any[]) => void
 
-function nullLogger(message: string, value?: any): void {}
+function nullLogger(message: string, value?: any, ...args: any[]): void {}
 
-function consoleLogger(message: string, value?: any): void {
+function consoleLogger(message: string, value?: any, ...args: any[]): void {
   console.log(message, value);
 }
 
