@@ -230,9 +230,6 @@ class Render {
      * Runs render with the built customizations.
      */
     async asFragment() {
-        const state = await this.run();
-        const value = state.value;
-        const mods = state.mods;
         let logger = nullLogger;
         if (this.template.hasAttribute("debug")) {
             logger = consoleLogger;
@@ -243,16 +240,25 @@ class Render {
                     logger = elementLogger(element);
             }
         }
-        if (Array.isArray(value)) {
-            let fragment = document.createDocumentFragment();
-            for (let i = 0; i < value.length; i++) {
-                let target = document.importNode(this.template.content, true);
-                fragment.appendChild(renderFragment(target, value[i], mods, logger));
+        try {
+            const state = await this.run();
+            const value = state.value;
+            const mods = state.mods;
+            if (Array.isArray(value)) {
+                let fragment = document.createDocumentFragment();
+                for (let i = 0; i < value.length; i++) {
+                    let target = document.importNode(this.template.content, true);
+                    fragment.appendChild(renderFragment(target, value[i], mods, logger));
+                }
+                return fragment;
             }
-            return fragment;
+            let target = document.importNode(this.template.content, true);
+            return renderFragment(target, value, mods, logger);
         }
-        let target = document.importNode(this.template.content, true);
-        return renderFragment(target, value, mods, logger);
+        catch (err) {
+            logger(err.stack);
+            throw err;
+        }
     }
     /**
      * Runs asFragment and inserts the document fragment into the target,

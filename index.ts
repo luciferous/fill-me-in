@@ -70,16 +70,16 @@ const defaultMods: Mod[] = [
   textContent
 ];
 
-type Logger = (message: string, value: any, ...args: any[]) => void
+type Logger = (message: string, value?: any, ...args: any[]) => void
 
-function nullLogger(message: string, value: any): void {}
+function nullLogger(message: string, value?: any): void {}
 
-function consoleLogger(message: string, value: any): void {
+function consoleLogger(message: string, value?: any): void {
   console.log(message, value);
 }
 
 function elementLogger(e: Element): Logger {
-  return (message: string, value: any, ...args: any[]) => {
+  return (message: string, value?: any, ...args: any[]) => {
     let pre = document.createElement("pre");
     pre.textContent = `${message} ${JSON.stringify(value, ...args)}`;
     e.appendChild(pre);
@@ -304,10 +304,6 @@ class Render<A> {
    * Runs render with the built customizations.
    */
   async asFragment(): Promise<DocumentFragment> {
-    const state = await this.run();
-    const value = state.value;
-    const mods = state.mods;
-
     let logger = nullLogger;
     if (this.template.hasAttribute("debug")) {
       logger = consoleLogger;
@@ -318,17 +314,26 @@ class Render<A> {
       }
     }
 
-    if (Array.isArray(value)) {
-      let fragment = document.createDocumentFragment();
-      for (let i = 0; i < value.length; i++) {
-        let target = document.importNode(this.template.content, true);
-        fragment.appendChild(renderFragment(target, value[i], mods, logger));
-      }
-      return fragment;
-    }
+    try {
+      const state = await this.run();
+      const value = state.value;
+      const mods = state.mods;
 
-    let target = document.importNode(this.template.content, true);
-    return renderFragment(target, value, mods, logger);
+      if (Array.isArray(value)) {
+        let fragment = document.createDocumentFragment();
+        for (let i = 0; i < value.length; i++) {
+          let target = document.importNode(this.template.content, true);
+          fragment.appendChild(renderFragment(target, value[i], mods, logger));
+        }
+        return fragment;
+      }
+
+      let target = document.importNode(this.template.content, true);
+      return renderFragment(target, value, mods, logger);
+    } catch (err) {
+      logger(err.stack);
+      throw err;
+    }
   }
 
   /**

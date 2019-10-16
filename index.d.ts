@@ -12,7 +12,7 @@ interface ModEvent {
  * @param e - an object with `element` and `value`
  */
 declare type Mod = (this: Element, e: ModEvent) => boolean | void;
-declare type Logger = (message: string, value: any, ...args: any[]) => void;
+declare type Logger = (message: string, value?: any, ...args: any[]) => void;
 /**
  * Creates a document fragment from the given template and a value.
  *
