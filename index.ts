@@ -47,26 +47,7 @@ function textContent(this: Element, e: ModEvent): boolean | void {
   this.textContent = e.value.toString();
 }
 
-function unpackObject(this: Element, e: ModEvent): boolean | void {
-  if (typeof e.value !== "object") return false;
-
-  for (let attr of Object.keys(e.value)) {
-    if (attr == "textContent") {
-      this.textContent = e.value[attr];
-    } else {
-      this.setAttribute(attr, e.value[attr]);
-    }
-  }
-}
-
-function imageSource(this: Element, e: ModEvent): boolean | void {
-  if (this.nodeName !== "IMG") return false;
-  this.setAttribute("src", e.value.toString());
-}
-
 const defaultMods: Mod[] = [
-  unpackObject,
-  imageSource,
   textContent
 ];
 
@@ -129,6 +110,25 @@ export function renderFragment<T>(
   return target;
 }
 
+function hasSlotAttributes(node: Element): boolean {
+  for (let name of node.getAttributeNames()) {
+    if (name.startsWith("slot-")) return true;
+  }
+  return false;
+}
+
+function findNextSlot(nodes: Element[]): Element | null {
+  while (nodes.length > 0) {
+    let node = nodes.pop()!;
+    if (node.hasAttribute("slot")) return node;
+    for (let name of node.getAttributeNames()) {
+      if (name.startsWith("slot-")) return node;
+    }
+    nodes.push(...node.children);
+  }
+  return null;
+}
+
 function go<T>(refs: [Element, T][], mods: Mod[], logger: Logger): void {
   while (refs.length > 0) {
     let [node, values] = refs.pop()!;
@@ -136,14 +136,31 @@ function go<T>(refs: [Element, T][], mods: Mod[], logger: Logger): void {
     let target: Element | null;
     if (node.hasAttribute("slot")) {
       target = node;
+    } else if (hasSlotAttributes(node)) {
+      target = node;
+      refs.push([node, values]);
     } else {
-      target = node.querySelector("[slot]");
+      target = findNextSlot([node]);
       if (target) {
         refs.push([node, values]);
       }
     }
 
     if (!target) continue;
+
+    for (let name of target.getAttributeNames()) {
+      if (!name.startsWith("slot-")) continue;
+      let attr = target.getAttribute(name);
+      target.removeAttribute(name);
+      let key = name.slice("slot-".length);
+      if (attr && attr in values) {
+        target.setAttribute(key, (values as any)[attr].toString());
+      } else if (key in values) {
+        target.setAttribute(key, (values as any)[key].toString());
+      }
+    }
+
+    if (!target.hasAttribute("slot")) continue;
 
     let value: any;
     let key = target.getAttribute("slot");
@@ -154,7 +171,11 @@ function go<T>(refs: [Element, T][], mods: Mod[], logger: Logger): void {
     }
 
     if (key && !Array.isArray(values) && typeof values === "object") {
-      value = (values as any)[key];
+      if (key in values) {
+        value = (values as any)[key];
+      } else if (!target.hasChildNodes()) {
+        throw new Error(`'${key}' not found: ${JSON.stringify(values)}`);
+      }
     } else {
       value = values;
     }

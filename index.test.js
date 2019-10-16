@@ -411,20 +411,18 @@ test("nested template", () => {
   assert(got.isEqualNode(want), diff(got, want));
 });
 
-test("unpack object", () => {
+test("slot-*", () => {
   let got = renderFragment(
     mk(`
-<div slot="greeting">Default text.</div>
+<a slot-href="link"><img slot-src="thumbnail"></a>
     `),
     {
-      greeting: {
-        class: "greeting",
-        textContent: "hello"
-      }
+      link: "/hello",
+      thumbnail: "logo.png"
     }
   );
   let want = mk(`
-<div class="greeting">hello</div>
+<a href="/hello"><img src="logo.png"></a>
   `);
   assert(got.isEqualNode(want), diff(got, want));
 });

@@ -25,26 +25,7 @@ function newFunction(defn) {
 function textContent(e) {
     this.textContent = e.value.toString();
 }
-function unpackObject(e) {
-    if (typeof e.value !== "object")
-        return false;
-    for (let attr of Object.keys(e.value)) {
-        if (attr == "textContent") {
-            this.textContent = e.value[attr];
-        }
-        else {
-            this.setAttribute(attr, e.value[attr]);
-        }
-    }
-}
-function imageSource(e) {
-    if (this.nodeName !== "IMG")
-        return false;
-    this.setAttribute("src", e.value.toString());
-}
 const defaultMods = [
-    unpackObject,
-    imageSource,
     textContent
 ];
 function nullLogger(message, value, ...args) { }
@@ -95,6 +76,26 @@ export function renderFragment(target, value, mods = defaultMods, logger = nullL
     go(refs, mods, logger);
     return target;
 }
+function hasSlotAttributes(node) {
+    for (let name of node.getAttributeNames()) {
+        if (name.startsWith("slot-"))
+            return true;
+    }
+    return false;
+}
+function findNextSlot(nodes) {
+    while (nodes.length > 0) {
+        let node = nodes.pop();
+        if (node.hasAttribute("slot"))
+            return node;
+        for (let name of node.getAttributeNames()) {
+            if (name.startsWith("slot-"))
+                return node;
+        }
+        nodes.push(...node.children);
+    }
+    return null;
+}
 function go(refs, mods, logger) {
     while (refs.length > 0) {
         let [node, values] = refs.pop();
@@ -102,13 +103,32 @@ function go(refs, mods, logger) {
         if (node.hasAttribute("slot")) {
             target = node;
         }
+        else if (hasSlotAttributes(node)) {
+            target = node;
+            refs.push([node, values]);
+        }
         else {
-            target = node.querySelector("[slot]");
+            target = findNextSlot([node]);
             if (target) {
                 refs.push([node, values]);
             }
         }
         if (!target)
+            continue;
+        for (let name of target.getAttributeNames()) {
+            if (!name.startsWith("slot-"))
+                continue;
+            let attr = target.getAttribute(name);
+            target.removeAttribute(name);
+            let key = name.slice("slot-".length);
+            if (attr && attr in values) {
+                target.setAttribute(key, values[attr].toString());
+            }
+            else if (key in values) {
+                target.setAttribute(key, values[key].toString());
+            }
+        }
+        if (!target.hasAttribute("slot"))
             continue;
         let value;
         let key = target.getAttribute("slot");
@@ -119,7 +139,12 @@ function go(refs, mods, logger) {
             logger(key + ":", values, null, " ");
         }
         if (key && !Array.isArray(values) && typeof values === "object") {
-            value = values[key];
+            if (key in values) {
+                value = values[key];
+            }
+            else if (!target.hasChildNodes()) {
+                throw new Error(`'${key}' not found: ${JSON.stringify(values)}`);
+            }
         }
         else {
             value = values;
