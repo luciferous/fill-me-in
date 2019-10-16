@@ -91,15 +91,15 @@ declare class Render<A> {
     /**
      * Map over content transforming it with `f`.
      */
-    mapList<AA extends A[], A, B>(this: Render<AA>, mapFn: (a: A) => B): Render<B[]>;
+    mapList<B, C>(this: Render<B[]>, mapFn: (b: B) => C): Render<C[]>;
     /**
      * Fold over the content to transform it with `reduceFn`.
      */
-    reduce<AA extends A[], A, B>(this: Render<AA>, reduceFn: (accumulator: B, value: A) => B, initial: B): Render<B>;
+    reduce<B, C>(this: Render<B[]>, reduceFn: (accumulator: C, value: B) => C, initial: C): Render<C>;
     /**
      * Remove content, keeping only that which matches `predicate`.
      */
-    filter<AA extends A[], A>(this: Render<AA>, predicate: (value: A) => boolean): Render<A[]>;
+    filter<B>(this: Render<B[]>, predicate: (value: B) => boolean): Render<B[]>;
     /**
      * Runs render with the built customizations.
      */
