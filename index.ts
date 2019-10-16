@@ -163,7 +163,12 @@ function go<T>(refs: [Element, T][], mods: Mod[], logger: Logger): void {
     if (!value) continue;
 
     if (Array.isArray(value)) {
-      let template = target.querySelector("template")!;
+      let template = (
+        target instanceof HTMLTemplateElement
+      ) ? target : target.querySelector("template");
+      if (!template) {
+        throw new Error("expected <template> for list items");
+      }
       for (let item of value) {
         let clone = document.importNode(template.content, true);
         for (let i = 0; i < clone.children.length; i++) {
@@ -316,8 +321,27 @@ class Render<A> {
 
     try {
       const state = await this.run();
-      const value = state.value;
+      const values = state.value;
       const mods = state.mods;
+
+      let value: any;
+      if (this.template.hasAttribute("slot")) {
+        let key = this.template.getAttribute("slot");
+        if (key && this.template.hasAttribute("print")) {
+          logger(key + ":", values);
+        } else if (key && this.template.hasAttribute("pprint")) {
+          logger(key + ":", values, null, " ");
+        }
+
+        if (key && !Array.isArray(values) && typeof values === "object") {
+          value = (values as any)[key];
+        } else {
+          value = values;
+        }
+        this.template.removeAttribute("slot");
+      } else {
+        value = values;
+      }
 
       if (Array.isArray(value)) {
         let fragment = document.createDocumentFragment();
