@@ -216,10 +216,11 @@ function go(refs, mods, logger) {
  * - Renders the remaining albums with the #album-template and inserts it into #content
  */
 class Render {
-    constructor(template, apply, mods) {
+    constructor(template, apply, mods, value) {
         this.template = template;
         this.apply = apply;
         this.mods = mods;
+        this.value = value;
     }
     andThen(fn) {
         return new Render(this.template, a => fn(this.apply(a)), this.mods);
@@ -333,16 +334,10 @@ class Render {
      * Runs the renderer, returning the resulting state.
      */
     async run() {
-        if (this.apply.fromCache) {
-            return this.apply({
-                value: undefined,
-                mods: this.mods
-            });
-        }
         let url = this.template.getAttribute("data-src");
-        if (!url) {
+        if (!url || typeof this.value !== "undefined") {
             return this.apply({
-                value: undefined,
+                value: this.value,
                 mods: this.mods
             });
         }
@@ -389,9 +384,7 @@ class Render {
      */
     async cache() {
         const state = await this.run();
-        let k = (_) => state;
-        k.fromCache = true;
-        return new Render(this.template, k, state.mods);
+        return new Render(this.template, a => a, state.mods, state.value);
     }
 }
 /**

@@ -265,11 +265,18 @@ class Render<A> {
   private template: HTMLTemplateElement
   private apply: Apply<any, A>
   private mods: Mod[]
+  private value?: A
 
-  constructor(template: HTMLTemplateElement, apply: Apply<any, A>, mods: Mod[]) {
+  constructor(
+    template: HTMLTemplateElement,
+    apply: Apply<any, A>,
+    mods: Mod[],
+    value?: A
+  ) {
     this.template = template;
     this.apply = apply;
     this.mods = mods;
+    this.value = value;
   }
 
   private andThen<B>(fn: Apply<A, B>): Render<B> {
@@ -402,17 +409,10 @@ class Render<A> {
    * Runs the renderer, returning the resulting state.
    */
   async run(): Promise<State<A>> {
-    if ((this.apply as any).fromCache) {
-      return this.apply({
-        value: undefined,
-        mods: this.mods
-      });
-    }
-
     let url = this.template.getAttribute("data-src");
-    if (!url) {
+    if (!url || typeof this.value !== "undefined") {
       return this.apply({
-        value: undefined,
+        value: this.value,
         mods: this.mods
       });
     }
@@ -461,9 +461,7 @@ class Render<A> {
    */
   async cache(): Promise<Render<A>> {
     const state = await this.run();
-    let k = (_: any) => state;
-    (k as any).fromCache = true;
-    return new Render(this.template, k, state.mods);
+    return new Render(this.template, a => a, state.mods, state.value);
   }
 }
 
