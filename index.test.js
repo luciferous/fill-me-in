@@ -411,14 +411,29 @@ test("nested template", () => {
   assert(got.isEqualNode(want), diff(got, want));
 });
 
+test("slot-attribute with slot", () => {
+  let got = renderFragment(
+    mk(`
+<option slot-name="name" slot="name"></option>
+    `),
+    {
+      name: "hello"
+    }
+  );
+  let want = mk(`
+<option name="hello">hello</option>
+  `);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
 test("slot-*", () => {
   let got = renderFragment(
     mk(`
-<a slot-href="link"><img slot-src="thumbnail"></a>
+<a slot-href="link"><img slot-src></a>
     `),
     {
       link: "/hello",
-      thumbnail: "logo.png"
+      src: "logo.png"
     }
   );
   let want = mk(`
