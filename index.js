@@ -130,14 +130,14 @@ function go(refs, mods, logger) {
         }
         if (!target.hasAttribute("slot"))
             continue;
-        let value;
         let key = target.getAttribute("slot");
-        if (key && target.hasAttribute("print")) {
-            logger(key + ":", values);
+        if (target.hasAttribute("print")) {
+            logger((key !== null && key !== void 0 ? key : ""), values);
         }
-        else if (key && target.hasAttribute("pprint")) {
-            logger(key + ":", values, null, " ");
+        else if (target.hasAttribute("pprint")) {
+            logger((key !== null && key !== void 0 ? key : ""), values, null, " ");
         }
+        let value;
         if (key && !Array.isArray(values) && typeof values === "object") {
             if (key in values) {
                 value = values[key];

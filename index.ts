@@ -162,14 +162,14 @@ function go<T>(refs: [Element, T][], mods: Mod[], logger: Logger): void {
 
     if (!target.hasAttribute("slot")) continue;
 
-    let value: any;
     let key = target.getAttribute("slot");
-    if (key && target.hasAttribute("print")) {
-      logger(key + ":", values);
-    } else if (key && target.hasAttribute("pprint")) {
-      logger(key + ":", values, null, " ");
+    if (target.hasAttribute("print")) {
+      logger(key ?? "", values);
+    } else if (target.hasAttribute("pprint")) {
+      logger(key ?? "", values, null, " ");
     }
 
+    let value: any;
     if (key && !Array.isArray(values) && typeof values === "object") {
       if (key in values) {
         value = (values as any)[key];
