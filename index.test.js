@@ -86,6 +86,15 @@ test("filter", async () => {
   assert.deepEqual(state.value, [2, 3]);
 });
 
+test("groupBy", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue([1, 2, 3])
+      .groupBy(n => (n % 2 == 0) ? "even" : "odd");
+  const state = await e.run();
+  assert.deepEqual(state.value, { "even": [2], "odd": [1, 3] });
+});
+
 test("reduce", async () => {
   let e =
     render(document.createElement("template"))

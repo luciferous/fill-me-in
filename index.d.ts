@@ -86,21 +86,27 @@ declare class Render<A> {
      */
     withValue<B>(value: B): Render<B>;
     /**
-     * Map over content transforming it with `f`.
+     * Map over content transforming it with `mapFn`.
      */
     map<B>(mapFn: (a: A) => B): Render<B>;
     /**
-     * Map over content transforming it with `f`.
+     * Map over a list transforming it with `mapFn`.
      */
     mapList<B, C>(this: Render<B[]>, mapFn: (b: B) => C): Render<C[]>;
     /**
-     * FlatMap over content transforming it with `f`.
+     * FlatMap over a list transforming it with `flatMapFn`.
      */
     flatMapList<B, C>(this: Render<B[]>, flatMapFn: (b: B) => C[]): Render<C[]>;
     /**
      * Fold over the content to transform it with `reduceFn`.
      */
     reduce<B, C>(this: Render<B[]>, reduceFn: (accumulator: C, value: B) => C, initial: C): Render<C>;
+    /**
+     * Groups elements of a list by `groupFn`.
+     */
+    groupBy<B>(this: Render<B[]>, groupFn: (b: B) => string): Render<{
+        [key: string]: B[];
+    }>;
     /**
      * Remove content, keeping only that which matches `predicate`.
      */

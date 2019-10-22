@@ -292,7 +292,7 @@ class Render<A> {
   }
 
   /**
-   * Map over content transforming it with `f`.
+   * Map over content transforming it with `mapFn`.
    */
   map<B>(mapFn: (a: A) => B): Render<B> {
     return this.andThen(
@@ -300,7 +300,7 @@ class Render<A> {
   }
 
   /**
-   * Map over content transforming it with `f`.
+   * Map over a list transforming it with `mapFn`.
    */
   mapList<B, C>(this: Render<B[]>, mapFn: (b: B) => C): Render<C[]> {
     return this.andThen(
@@ -308,7 +308,7 @@ class Render<A> {
   }
 
   /**
-   * FlatMap over content transforming it with `f`.
+   * FlatMap over a list transforming it with `flatMapFn`.
    */
   flatMapList<B, C>(this: Render<B[]>, flatMapFn: (b: B) => C[]): Render<C[]> {
     return this.andThen(
@@ -326,6 +326,20 @@ class Render<A> {
       state => Object.assign(state, { value: state.value.reduce(reduceFn, initial) }));
   }
 
+  /**
+   * Groups elements of a list by `groupFn`.
+   */
+  groupBy<B>(this: Render<B[]>, groupFn: (b: B) => string): Render<{ [key: string]: B[] }> {
+    return this.andThen(
+      state => Object.assign(state, { value: state.value.reduce(reduceFn, {}) }));
+
+    function reduceFn(groups: { [key: string]: B[] }, b: B) {
+      const key = groupFn(b);
+      if (!(key in groups)) groups[key] = [];
+      groups[key].push(b);
+      return groups;
+    }
+  }
 
   /**
    * Remove content, keeping only that which matches `predicate`.

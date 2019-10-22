@@ -232,19 +232,19 @@ class Render {
         return this.andThen(state => Object.assign(state, { value: value }));
     }
     /**
-     * Map over content transforming it with `f`.
+     * Map over content transforming it with `mapFn`.
      */
     map(mapFn) {
         return this.andThen(state => Object.assign(state, { value: mapFn(state.value) }));
     }
     /**
-     * Map over content transforming it with `f`.
+     * Map over a list transforming it with `mapFn`.
      */
     mapList(mapFn) {
         return this.andThen(state => Object.assign(state, { value: state.value.map(mapFn) }));
     }
     /**
-     * FlatMap over content transforming it with `f`.
+     * FlatMap over a list transforming it with `flatMapFn`.
      */
     flatMapList(flatMapFn) {
         return this.andThen(state => Object.assign(state, { value: state.value.flatMap(flatMapFn) }));
@@ -254,6 +254,19 @@ class Render {
      */
     reduce(reduceFn, initial) {
         return this.andThen(state => Object.assign(state, { value: state.value.reduce(reduceFn, initial) }));
+    }
+    /**
+     * Groups elements of a list by `groupFn`.
+     */
+    groupBy(groupFn) {
+        return this.andThen(state => Object.assign(state, { value: state.value.reduce(reduceFn, {}) }));
+        function reduceFn(groups, b) {
+            const key = groupFn(b);
+            if (!(key in groups))
+                groups[key] = [];
+            groups[key].push(b);
+            return groups;
+        }
     }
     /**
      * Remove content, keeping only that which matches `predicate`.
