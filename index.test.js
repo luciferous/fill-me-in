@@ -32,7 +32,7 @@ function normalize(node) {
 
 suite("Render");
 
-test("template slot", async () => {
+test("template slot=", async () => {
   let div = document.createElement("div");
   div.innerHTML = `
 <template slot="fruit">
@@ -212,8 +212,33 @@ test("nested object", () => {
   assert(got.isEqualNode(want), diff(got, want));
 });
 
-
 test("template slot", () => {
+  let got = renderFragment(
+    mk(`
+<ul slot="items">
+  <template slot>
+    <template slot="fruit"><li slot></li></template>
+  </template>
+</ul>
+    `),
+    {
+      items: [
+        { fruit: [ "apple", "orange" ] }
+      ]
+    }
+  );
+  let want = mk(`
+<ul>
+  <li>apple</li>
+  <li>orange</li>
+</ul>
+  `);
+  normalize(got);
+  normalize(want);
+  assert(got.isEqualNode(want), diff(got, want));
+});
+
+test("template slot=", () => {
   let got = renderFragment(
     mk(`
 <ul>
