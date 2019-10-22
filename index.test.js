@@ -113,6 +113,15 @@ test("mapList", async () => {
   assert.deepEqual(state.value, [2, 4, 6]);
 });
 
+test("flatMapList", async () => {
+  let e =
+    render(document.createElement("template"))
+      .withValue([1, 2, 3])
+      .flatMapList(n => [n * 2]);
+  const state = await e.run();
+  assert.deepEqual(state.value, [2, 4, 6]);
+});
+
 test("cache", async () => {
   let worksOnce = function(n) {
     if (worksOnce.fail) throw new Error("boo");

@@ -94,6 +94,10 @@ declare class Render<A> {
      */
     mapList<B, C>(this: Render<B[]>, mapFn: (b: B) => C): Render<C[]>;
     /**
+     * FlatMap over content transforming it with `f`.
+     */
+    flatMapList<B, C>(this: Render<B[]>, flatMapFn: (b: B) => C[]): Render<C[]>;
+    /**
      * Fold over the content to transform it with `reduceFn`.
      */
     reduce<B, C>(this: Render<B[]>, reduceFn: (accumulator: C, value: B) => C, initial: C): Render<C>;

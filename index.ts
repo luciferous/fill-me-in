@@ -308,6 +308,14 @@ class Render<A> {
   }
 
   /**
+   * FlatMap over content transforming it with `f`.
+   */
+  flatMapList<B, C>(this: Render<B[]>, flatMapFn: (b: B) => C[]): Render<C[]> {
+    return this.andThen(
+      state => Object.assign(state, { value: state.value.flatMap(flatMapFn) }));
+  }
+
+  /**
    * Fold over the content to transform it with `reduceFn`.
    */
   reduce<B, C>(

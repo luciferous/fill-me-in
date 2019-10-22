@@ -244,6 +244,12 @@ class Render {
         return this.andThen(state => Object.assign(state, { value: state.value.map(mapFn) }));
     }
     /**
+     * FlatMap over content transforming it with `f`.
+     */
+    flatMapList(flatMapFn) {
+        return this.andThen(state => Object.assign(state, { value: state.value.flatMap(flatMapFn) }));
+    }
+    /**
      * Fold over the content to transform it with `reduceFn`.
      */
     reduce(reduceFn, initial) {
