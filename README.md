@@ -62,7 +62,7 @@ The class `Render` is a builder API for customizing the render operation.
 
 For example, this expression,
 
-```
+```javascript
 render("#album-template")
   .filter(album => album.rating >= 4.5)
   .into("#content");
@@ -199,9 +199,9 @@ becomes
 </table>
 ```
 
-### Images
+### Attribute slots
 
-`<img>` is special-cased. The indexed value sets the `src` attribute.
+The indexed value sets the `src` attribute.
 
 ```javascript
 {
@@ -212,39 +212,13 @@ becomes
 applied to
 
 ```html
-<img src="default.jpg" slot="pic">
+<img slot-src="pic">
 ```
 
 produces
 
 ```html
 <img src="https://example.com/example.jpg">
-```
-
-### Links
-
-When the indexed value is an object, its properties are unpacked into
-attributes of the target element.
-
-```javascript
-{
-  link: {
-    href: "http://example.com/",
-    textContent: "Example"
-  }
-}
-```
-
-applied to
-
-```html
-<a slot="link"></a>
-```
-
-produces
-
-```html
-<a href="http://example.com/">Example</a>
 ```
 
 ## Mods (short for modifiers)
@@ -259,12 +233,6 @@ The default mod sets the `textContent` of the target.
 
 ```javascript
 function(e) { e.target.textContent = e.value }
-```
-
-The `<img>` mod sets the `src`.
-
-```javascript
-function(e) { e.target.src = e.value }
 ```
 
 You can define your own custom mods.  This is a nonsense modifier to set
