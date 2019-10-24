@@ -181,7 +181,7 @@ function go<T>(refs: [Element, T][], mods: Mod[], logger: Logger): void {
     }
     target.removeAttribute("slot");
 
-    if (!value) continue;
+    if (typeof value === "undefined") continue;
 
     if (Array.isArray(value)) {
       let template = (

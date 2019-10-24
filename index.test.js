@@ -191,14 +191,17 @@ suite("renderFragment");
 test("object", () => {
   let got = renderFragment(
     mk(`
-<div slot="greeting"></div>
+<div slot="name"></div>
+<div slot="zero"></div>
     `),
     {
-      greeting: "hello"
+      name: "wild",
+      zero: 0
     }
   );
   let want = mk(`
-<div>hello</div>
+<div>wild</div>
+<div>0</div>
   `);
   assert(got.isEqualNode(want), diff(got, want));
 });

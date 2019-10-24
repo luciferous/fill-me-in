@@ -150,7 +150,7 @@ function go(refs, mods, logger) {
             value = values;
         }
         target.removeAttribute("slot");
-        if (!value)
+        if (typeof value === "undefined")
             continue;
         if (Array.isArray(value)) {
             let template = (target instanceof HTMLTemplateElement) ? target : target.querySelector("template");
