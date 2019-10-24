@@ -162,7 +162,7 @@ function go(refs, mods, logger) {
                 for (let i = 0; i < clone.children.length; i++) {
                     refs.push([clone.children[i], item]);
                 }
-                template.parentElement.insertBefore(clone, template);
+                template.parentNode.insertBefore(clone, template);
             }
             template.remove();
             if (target.hasAttribute("onempty") && value.length == 0) {

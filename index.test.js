@@ -4,6 +4,7 @@ import { render, renderFragment } from "./index.js";
 
 function mk(html, skipFragment) {
   let template = document.createElement("template");
+  template.setAttribute("debug", null);
   template.innerHTML = html.trim();
   if (skipFragment) return template;
   return document.importNode(template.content, true);
@@ -307,7 +308,6 @@ test("arrays", () => {
 });
 
 test("bare array", async () => {
-  ;
   let got = await render(
     mk(`
 <li slot></li>
