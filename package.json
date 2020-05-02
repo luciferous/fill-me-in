@@ -1,6 +1,6 @@
 {
   "name": "fill-me-in",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Prototyping library for JSON-driven web pages",
   "main": "index.js",
   "type": "module",
@@ -12,6 +12,10 @@
   ],
   "author": "Neuman Vong",
   "license": "MIT",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/luciferous/fill-me-in.git"
+  },
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^6.2.1",
